@@ -77,8 +77,8 @@ namespace VISA_CLI
              try
             {
                 // GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
-                GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
-                Console.WriteLine("will open {0}",GlobalVars.VISAResourceName);
+                GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open("GPIB0::7::INSTR");
+                Console.WriteLine("will open GPIB0::7::INSTR");
             }
             catch (InvalidCastException) //打开了不支持的设备
             {
@@ -93,22 +93,22 @@ namespace VISA_CLI
             finally //不论是否有异常以下代码都会被执行
             {
                 GlobalVars.mbSession.Timeout = GlobalVars.VISASessionTimeout; //设置超时   
-                Console.WriteLine(GlobalVars.mbSession.Query(GlobalVars.VISA_CLI_Option_CommandString));
-                Console.WriteLine("Console.WriteLine(GlobalVars.mbSession.Query(\"{0}\"));",GlobalVars.VISA_CLI_Option_CommandString);
-                Console.WriteLine("press ENTER to quit");
+                Console.WriteLine(GlobalVars.mbSession.Query("*IDN?"));
+                Console.WriteLine("Console.WriteLine(GlobalVars.mbSession.Query(\" *IDN? \"));");
+                Console.WriteLine("press ENTER to continue");
                 Console.ReadLine();
-               // String s = GlobalVars.mbSession.Query(":DISPlay:DATA? JPG", 500000);
-               // Console.WriteLine("50000 byte request And s.Length={0} byte actually transfered", s.Length);
-               // Console.WriteLine(s);
-               // Console.WriteLine("Console.WriteLine(GlobalVars.mbSession.Query(\":DISPlay: DATA ? JPG\", 500000));");
-               // Console.WriteLine("press ENTER to continue");
-               // Console.ReadLine();
-               // GlobalVars.mbSession.Write(":DISPlay: DATA ? JPG");
-               // GlobalVars.mbSession.ReadToFile("1.jpg");
-               // Console.WriteLine("GlobalVars.mbSession.ReadToFile(\"1.jpg\");");
+                String s = GlobalVars.mbSession.Query(":DISPlay:DATA? JPG", 500000);
+                Console.WriteLine("50000 byte request And s.Length={0} byte actually transfered", s.Length);
+                Console.WriteLine(s);
+                Console.WriteLine("Console.WriteLine(GlobalVars.mbSession.Query(\":DISPlay: DATA ? JPG\", 500000));");
+                Console.WriteLine("press ENTER to continue");
+                Console.ReadLine();
+                GlobalVars.mbSession.Write(":DISPlay: DATA ? JPG");
+                GlobalVars.mbSession.ReadToFile("1.jpg");
+                Console.WriteLine("GlobalVars.mbSession.ReadToFile(\"1.jpg\");");
                 GlobalVars.mbSession.Dispose();
             }
-            //Console.ReadLine();
+            Console.ReadLine();
             return 0;
         }
     }
