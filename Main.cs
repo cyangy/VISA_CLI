@@ -120,7 +120,7 @@ namespace VISA_CLI
             if (GlobalVars.VISA_CLI_Option_SkipFirstNbytes > 0)
             {
                 ArraySegment<byte> segment = new ArraySegment<byte>(GlobalVars.VISA_CLI_ReadBackBuffer, GlobalVars.VISA_CLI_Option_SkipFirstNbytes, GlobalVars.VISA_CLI_ReadBackBuffer.Length - GlobalVars.VISA_CLI_Option_SkipFirstNbytes);
-                GlobalVars.VISA_CLI_ReadBackBuffer = segment.ToArray();
+                GlobalVars.VISA_CLI_ReadBackBuffer = segment.Array;
             }
         }
         public static void Query()
