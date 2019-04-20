@@ -18,7 +18,7 @@ using DotNet4_ArraySegment_ToArray_Implement;
 namespace VISA_CLI
 {
     
-    class myVISA_CLI
+    class VISA_CLI
     {
         public enum Mode : short { GPIB = 1, SERIAL,USBRAW,USBTMC } //https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/enum
         public static void ParseArgs(string[] args) //https://mail.gnome.org/archives/commits-list/2012-December/msg00139.html
@@ -169,7 +169,7 @@ namespace VISA_CLI
             //myHelp.Show_gpib_help();
             //Console.ReadLine();
             //尝试解析各参数
-            myVISA_CLI.ParseArgs(args);
+            VISA_CLI.ParseArgs(args);
 
             //根据各参数开始执行命令
             //首先根据用户需求生成相应的资源名称(GPIB0::2::INSTR、ASRL2::INSTR)
