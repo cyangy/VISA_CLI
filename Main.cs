@@ -175,8 +175,7 @@ namespace VISA_CLI
             //首先根据用户需求生成相应的资源名称(GPIB0::2::INSTR、ASRL2::INSTR)
             if(!GenerateVISAResourceName(GlobalVars.VISA_CLI_Option_CurrentMode)) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
             {
-                var standardError = new StreamWriter(Console.OpenStandardError());
-                standardError.AutoFlush = true;
+                var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
                 Console.SetError(standardError);
                 Console.Error.WriteLine("mode must be specified!");
                 Console.Error.WriteLine("       {0} -h for more information", System.AppDomain.CurrentDomain.FriendlyName);
@@ -184,8 +183,7 @@ namespace VISA_CLI
             }
             if (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0 && GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
             {
-                var standardError = new StreamWriter(Console.OpenStandardError());
-                standardError.AutoFlush = true;
+                var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
                 Console.SetError(standardError);
                 Console.Error.WriteLine("GPIB Primary Address or Serial Port Number  must be specified!");
                 return -1;
