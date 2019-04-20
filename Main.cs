@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using NationalInstruments.VisaNS;
 using Mono.Options;
+using System.Diagnostics;
 
 #if NET40
 using DotNet4_ArraySegment_ToArray_Implement;
@@ -165,6 +166,7 @@ namespace VISA_CLI
         }
         static Int32 Main(string[] args)
         {
+            Stopwatch sw = Stopwatch.StartNew();
             //Console.WriteLine("Hello World!");
             //myHelp.Show_gpib_help();
             //Console.ReadLine();
@@ -302,7 +304,12 @@ namespace VISA_CLI
                 */
             }
             //Console.ReadLine();
-            return 0;
+            sw.Stop();
+            if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
+            {
+                Console.WriteLine("Time taken: {0}ms", sw.Elapsed.TotalMilliseconds);
+            }
+                return 0;
         }
     }
     
