@@ -10,6 +10,10 @@ using System.Threading.Tasks;
 using NationalInstruments.VisaNS;
 using Mono.Options;
 
+#if NET40
+using DotNet4_ArraySegment_ToArray_Implement;
+#endif
+
 
 namespace VISA_CLI
 {
@@ -120,7 +124,19 @@ namespace VISA_CLI
             if (GlobalVars.VISA_CLI_Option_SkipFirstNbytes > 0)
             {
                 ArraySegment<byte> segment = new ArraySegment<byte>(GlobalVars.VISA_CLI_ReadBackBuffer, GlobalVars.VISA_CLI_Option_SkipFirstNbytes, GlobalVars.VISA_CLI_ReadBackBuffer.Length - GlobalVars.VISA_CLI_Option_SkipFirstNbytes);
-                GlobalVars.VISA_CLI_ReadBackBuffer = segment.Array;
+#if NET40
+                if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
+                 {
+                   Console.WriteLine(" .NET Framwork Version 4.0 : segment.AsList().ToArray()) ");
+                 }
+                GlobalVars.VISA_CLI_ReadBackBuffer = segment.AsList().ToArray();
+#else
+                if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
+                {
+                    Console.WriteLine(" .NET Framwork Version > 4.0 : segment.ToArray()) "); // For   Newer than  .NET4.0 Framework Use  segment.ToArray()  https://docs.microsoft.com/en-us/dotnet/api/system.arraysegment-1.array?view=netframework-4.0
+                 }
+                GlobalVars.VISA_CLI_ReadBackBuffer = segment.ToArray();
+#endif
             }
         }
         public static void Query()
