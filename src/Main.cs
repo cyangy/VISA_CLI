@@ -127,7 +127,7 @@ namespace VISA_CLI
         public static void  Write()
         {
             GlobalVars.mbSession.Clear(); //it's better send a Device Clear before operation
-            GlobalVars.mbSession.Write(GlobalVars.VISA_CLI_Option_CommandString);
+            GlobalVars.mbSession.Write(Encoding.Default.GetBytes(GlobalVars.VISA_CLI_Option_CommandString)); // use Write(Byte[]) instead of Write(String)
         }
         public static void Read()
         {
