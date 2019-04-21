@@ -55,6 +55,7 @@ namespace VISA_CLI
                 { "O|overwrite|OverwriteFile", "if file exist ,overwrite it", v =>  GlobalVars.VISA_CLI_Option_OverwriteFile = v != null },
                 { "N|rBytes|ReadBackNbytes=", "how many bytes should be read back", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_ReadBackNbytes ) },
                 { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes ) },
+                { "L|ls|ListAllInstruments=", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
                 { "h|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
@@ -110,6 +111,18 @@ namespace VISA_CLI
                 Console.WriteLine("当前正使用COM通信,当前设置为:\n速率" + GlobalVars.VISA_CLI_Option_SerialBaudRate.ToString() + "\n数据位:" + GlobalVars.VISA_CLI_Option_SerialDataBits.ToString() + "\n停止位:" + (((int)GlobalVars.VISA_CLI_Option_SerialStopBits) / 10).ToString() + "\n校验方式(Parity):" + GlobalVars.VISA_CLI_Option_SerialParityEnumList[((int)GlobalVars.VISA_CLI_Option_SerialParity)] + "\nFlowControl:" + GlobalVars.VISA_CLI_Option_SerialFlowControlEnumList[((int)GlobalVars.VISA_CLI_Option_SerialFlowControl)] + "\n\n请确保仪器设置与本设置相符",
                   "当前通讯设置");
             }
+        }
+        public static int ListAllGPIBDevice()
+        {                                                                                                 //GPIB0::2::INSTR
+            String[] resources = ResourceManager.GetLocalManager().FindResources("GPIB[0-9]::[0-9]*::INSTR");//GPIB[0-9]::[0-9]*::?*   ?*
+            foreach (String res in resources)
+            {
+                MessageBasedSession mbs = (MessageBasedSession)ResourceManager.GetLocalManager().Open(res);
+                mbs.Clear(); //it's better send a Device Clear before operation
+                String IDN = mbs.Query("*IDN?");
+                Console.WriteLine(res.PadRight(20) +"   :   "+ IDN);
+            }
+            return 0;
         }
         public static void  Write()
         {
@@ -194,6 +207,8 @@ namespace VISA_CLI
             //尝试进行操作
             try
             {
+                if (GlobalVars.VISA_CLI_Option_ListInstruments) { ListAllGPIBDevice(); } //list all device then exit
+
                 // GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
                 GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
                 GlobalVars.currentInterfaceType = GlobalVars.mbSession.HardwareInterfaceType.ToString().ToUpper();//GPIB SERIAL
