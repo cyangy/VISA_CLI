@@ -159,7 +159,7 @@ namespace VISA_CLI
             }
             //https://docs.microsoft.com/en-us/dotnet/api/system.io.path.getextension?view=netframework-4.7.2
             //https://docs.microsoft.com/en-us/dotnet/api/system.io.path.getfilenamewithoutextension?view=netframework-4.7.2
-            GlobalVars.VISA_CLI_Option_FileName = Path.GetFileNameWithoutExtension(GlobalVars.VISA_CLI_Option_FileName) + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + Path.GetExtension(GlobalVars.VISA_CLI_Option_FileName);
+            GlobalVars.VISA_CLI_Option_FileName = Path.GetFileNameWithoutExtension(GlobalVars.VISA_CLI_Option_FileName)+"_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + Path.GetExtension(GlobalVars.VISA_CLI_Option_FileName);
             if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
             {
                 Console.WriteLine("new file name is :{0}", GlobalVars.VISA_CLI_Option_FileName);
