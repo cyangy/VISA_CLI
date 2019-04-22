@@ -55,7 +55,7 @@ namespace VISA_CLI
                 { "O|overwrite|OverwriteFile", "if file exist ,overwrite it", v =>  GlobalVars.VISA_CLI_Option_OverwriteFile = v != null },
                 { "N|rBytes|ReadBackNbytes=", "how many bytes should be read back", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_ReadBackNbytes ) },
                 { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes ) },
-                { "L|ls|ListAllInstruments=", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
+                { "L|ls|ListAllInstruments", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
                 { "h|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
