@@ -197,8 +197,8 @@ namespace VISA_CLI
                 Console.Error.WriteLine("mode must be specified!");
                 Console.Error.WriteLine("       {0} -h for more information", System.AppDomain.CurrentDomain.FriendlyName);
                 return -1;
-            }
-            if (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0 && GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
+            }                   //-ls                                            GPIB                                                    Serial
+            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0)) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
             {
                 var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
                 Console.SetError(standardError);
