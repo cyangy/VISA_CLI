@@ -120,7 +120,7 @@ namespace VISA_CLI
                 MessageBasedSession mbs = (MessageBasedSession)ResourceManager.GetLocalManager().Open(res);
                 mbs.Clear(); //it's better send a Device Clear before operation
                 String IDN = mbs.Query("*IDN?");
-                Console.Write(res.PadRight(20) +" | "+ IDN);
+                Console.Write(res.PadRight(20) +"   "+ IDN);
             }
             return 0;
         }
