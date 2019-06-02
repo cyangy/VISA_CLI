@@ -22,7 +22,7 @@ namespace VISA_CLI
     
     class VISA_CLI
     {
-        public enum Mode : short { GPIB = 1, SERIAL,USBRAW,USBTMC } //https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/enum
+        public enum Mode : short { GPIB = 1, SERIAL,USBRAW,USBTMC,TCPIP} //https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/enum
         public static void ParseArgs(string[] args) //https://mail.gnome.org/archives/commits-list/2012-December/msg00139.html
         {
             bool showHelp = false;
@@ -58,6 +58,13 @@ namespace VISA_CLI
                 { "pid|usbPID", "USB Model ID", v => GlobalVars.VISA_CLI_Option_USB_PID = v},
                 { "sn|usbSerialNumber", "USB Serial Number", v => GlobalVars.VISA_CLI_Option_USB_SerialNumber = v},
 
+                //TCPIP  TCPIP0::192.168.1.2::inst0::INSTR
+                { "T|useTCPIP", "TCPIP mode", v => GlobalVars.VISA_CLI_Option_CurrentMode = (short)Mode.TCPIP},
+                { "tcpip|tcpipAdapterBoardIndex=", "TCPIP Adapter board index(Default 0)", v => short.TryParse(v,out GlobalVars.VISA_CLI_Option_TCPIP_BoardIndex) },
+                { "ip|ipAddress=", "IP Address  or hostname of the device", v => GlobalVars.VISA_CLI_Option_TCPIP_IPAddressOrHostName = v},
+                { "inst|instNumber=", "LAN Device Name :inst number ,(Default 0)",  v => short.TryParse(v,out GlobalVars.VISA_CLI_Option_TCPIP_instNumber)},
+                
+                
                 //Common
                 { "C|cmdstr|CommandString=", "command(s) to send to the device", v =>  GlobalVars.VISA_CLI_Option_CommandString = v },
                 { "W|write|JustWriteCommand", "just write (default)", v =>  GlobalVars.VISA_CLI_Option_JustWriteCommand = v != null },
@@ -116,6 +123,15 @@ namespace VISA_CLI
                                                        + "::0x" + Regex.Replace(GlobalVars.VISA_CLI_Option_USB_PID, @"0[x,X]", "")
                                                        + GlobalVars.VISA_CLI_Option_USB_SerialNumber
                                                        + "::INSTR";
+                        return true;
+                    }
+                case ((short)Mode.TCPIP):     //TCPIP0::192.168.1.2::inst0::INSTR  TCPIP0::HostName::inst0::INSTR   IP地址或者主机名都可以
+                    {
+                        GlobalVars.VISAResourceName = String.Empty; // 清空原字符串
+                        GlobalVars.VISAResourceName = "TCPIP" + GlobalVars.VISA_CLI_Option_TCPIP_BoardIndex.ToString()
+                                                     + "::" + GlobalVars.VISA_CLI_Option_TCPIP_IPAddressOrHostName
+                                                     + "::inst" + GlobalVars.VISA_CLI_Option_TCPIP_instNumber.ToString()
+                                                     + "::INSTR";
                         return true;
                     }
                 default : return false;
@@ -235,12 +251,12 @@ namespace VISA_CLI
                 Console.Error.WriteLine("mode must be specified!");
                 Console.Error.WriteLine("       {0} -h for more information", System.AppDomain.CurrentDomain.FriendlyName);
                 return -1;
-            }                   //-ls                                            GPIB                                                    Serial
-            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) && (String.IsNullOrEmpty( GlobalVars.VISA_CLI_Option_USB_VID))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
+            }                   //-ls                                            GPIB                                                    Serial                                                                                                            USB                                                                                                                                                  TCPIP
+            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_VID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_PID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_SerialNumber)) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_TCPIP_IPAddressOrHostName))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
             {
                 var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
                 Console.SetError(standardError);
-                Console.Error.WriteLine("GPIB Primary Address or Serial Port Number or USB PID/VID/SN must be specified!");
+                Console.Error.WriteLine("GPIB Primary Address or Serial Port Number or USB PID/VID/SN  or  IP address/host name  must be specified!");
                 return -1;
             }
             //尝试进行操作
@@ -412,6 +428,13 @@ namespace VISA_CLI
         public static String VISA_CLI_Option_USB_VID = String.Empty;
         public static String VISA_CLI_Option_USB_PID = String.Empty;
         public static String VISA_CLI_Option_USB_SerialNumber = String.Empty;
+
+
+        //TCPIP
+        public static short VISA_CLI_Option_TCPIP_BoardIndex           = 0;
+        public static String VISA_CLI_Option_TCPIP_IPAddressOrHostName = String.Empty;
+        public static short VISA_CLI_Option_TCPIP_instNumber           = 0;
+
 
         //Common
         public static String VISA_CLI_Option_CommandString = null;         //command to send
