@@ -31,7 +31,7 @@ namespace VISA_CLI
 
                 //GPIB related
                 { "G|useGPIB", "GPIB mode", v => GlobalVars.VISA_CLI_Option_CurrentMode = (short)Mode.GPIB },
-                { "gpib|BoardIndex=", "GPIB board index(Default 0)", v =>  short.TryParse(v,out GlobalVars.VISA_CLI_Option_GPIB_BoardIndex) },  //https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/types/how-to-convert-a-string-to-a-number
+                { "gpib|gpibBoardIndex=", "GPIB board index(Default 0)", v =>  short.TryParse(v,out GlobalVars.VISA_CLI_Option_GPIB_BoardIndex) },  //https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/types/how-to-convert-a-string-to-a-number
                 { "pad|PrimaryAddress=", "primary address", v =>  short.TryParse(v,out GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress) },
                 { "sad|SecondaryAddress=", "secondary address", v =>  short.TryParse(v,out GlobalVars.VISA_CLI_Option_GPIB_SecondaryAddress ) },
            
@@ -53,7 +53,7 @@ namespace VISA_CLI
                 //Common
                 { "C|cmdstr|CommandString=", "command(s) to send to the device", v =>  GlobalVars.VISA_CLI_Option_CommandString = v },
                 { "W|write|JustWriteCommand", "just write (default)", v =>  GlobalVars.VISA_CLI_Option_JustWriteCommand = v != null },
-                { "R|read|JustReadBack", "the command is a query command", v =>  GlobalVars.VISA_CLI_Option_JustReadBack = v != null },
+                { "R|read|JustReadBack", "just read back", v =>  GlobalVars.VISA_CLI_Option_JustReadBack = v != null },
                 { "Q|query|QueryCommand", "the command is a query command", v =>  GlobalVars.VISA_CLI_Option_isQueryCommand = v != null },
                 { "D|debug|PrintDebugMessage", "prints debug messages", v =>  GlobalVars.VISA_CLI_Option_PrintDebugMessage  = v != null },
                 { "F|save2file|FileName=", "save the response binary data to specify file", v =>  GlobalVars.VISA_CLI_Option_FileName = v },
@@ -61,7 +61,7 @@ namespace VISA_CLI
                 { "N|rBytes|ReadBackNbytes=", "how many bytes should be read back", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_ReadBackNbytes ) },
                 { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes ) },
                 { "L|ls|ListAllInstruments", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
-                { "h|help",  "show this message and exit.", v => showHelp = v != null },
+                { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
             try
@@ -77,7 +77,7 @@ namespace VISA_CLI
 
             if (showHelp)
             {
-                Console.WriteLine("Usage: {0} -G|-C  [MODE related options] -C \"command string\"", System.AppDomain.CurrentDomain.FriendlyName);// System.Diagnostics.Process.GetCurrentProcess().ProcessName); //https://stackoverflow.com/questions/37459509/how-to-get-the-exe-name-while-the-program-is-running/37459553#37459553
+                Console.WriteLine("Usage: {0} -G|-S  [MODE related options] -C \"command string\"", System.AppDomain.CurrentDomain.FriendlyName);// System.Diagnostics.Process.GetCurrentProcess().ProcessName); //https://stackoverflow.com/questions/37459509/how-to-get-the-exe-name-while-the-program-is-running/37459553#37459553
                 Console.WriteLine();
                 Console.WriteLine("Options:");
                 p.WriteOptionDescriptions(Console.Out);
