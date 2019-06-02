@@ -1245,9 +1245,9 @@ namespace Mono.Options
 			option.Invoke (c);
 		}
 
-		private const int OptionWidth = 29;
-		private const int Description_FirstWidth  = 80 - OptionWidth;
-		private const int Description_RemWidth    = 80 - OptionWidth - 2;
+		private const int OptionWidth = 40;
+		private const int Description_FirstWidth  = 120 - OptionWidth;
+		private const int Description_RemWidth    = 120 - OptionWidth - 2;
 
 		static  readonly    string      CommandHelpIndentStart       = new string (' ', OptionWidth);
 		static  readonly    string      CommandHelpIndentRemaining   = new string (' ', OptionWidth + 2);
