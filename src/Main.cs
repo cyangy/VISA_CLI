@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using NationalInstruments.VisaNS;
 using Mono.Options;
 using System.Diagnostics;
+using System.Globalization;  //Byte.TryParse()
 
 #if NET40
 using DotNet4_ArraySegment_ToArray_Implement;
@@ -42,8 +43,12 @@ namespace VISA_CLI
                 { "stop|StopBits=", "Stop bits (Default 10)", v =>  StopBitType.TryParse(v,out GlobalVars.VISA_CLI_Option_SerialStopBits) },
                 { "parity|SerialParity=", "Serial Parity: NONE 0  Odd 1  Even 2 Mark 3 Space 4 (Default NONE)", v =>  Parity.TryParse(v,out GlobalVars.VISA_CLI_Option_SerialParity) },
                 { "flow|FlowControlTypes=", "Flow Control Types: NONE 0  XON/XOFF 1 (Default NONE)", v =>  FlowControlTypes.TryParse(v,out GlobalVars.VISA_CLI_Option_SerialFlowControl) },
-                { "terminate|TerminationCharacters=", "Termination Characters of Serial (Default \"\\n\")", v =>  GlobalVars.theTerminationCharactersOfRS232 = v },
-
+                { "stmR|SerialTerminationMethodWhenRead=",  "Serial Termination Method When Read  : None 0   LastBit 1   TerminationCharacter 2   Break 3 (Default TerminationCharacter)", v =>   SerialTerminationMethod.TryParse(v,out GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenRead) },
+                { "stmW|SerialTerminationMethodWhenWrite=", "Serial Termination Method When Write : None 0   LastBit 1   TerminationCharacter 2   Break 3 (Default NONE)",                 v =>   SerialTerminationMethod.TryParse(v,out GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenWrite) },
+                   //{ "terminateW|TerminationCharactersOfWrite=", "Termination Characters of Serial  When Write (Default 0x0A(\"\\n\"))", v =>  GlobalVars.theWriteTerminationCharactersOfRS232 = Convert.ToByte(v,16) }, // --terminateW "" 时会产生异常,用 Byte.TryParse()
+                   //{ "terminateR|TerminationCharactersOfRead=",  "Termination Characters of Serial  When Read  (Default 0x0A(\"\\n\"))", v =>   GlobalVars.theReadTerminationCharactersOfRS232 = Convert.ToByte(v,16) },
+                { "terminateW|TerminationCharactersOfWrite=", "Termination Characters of Serial  When Write (Default 0x0A(\"\\n\"))", v =>  Byte.TryParse(Regex.Replace(v,@"0[x,X]",""),NumberStyles.HexNumber,/*CultureInfo.CurrentCulture*/null,out GlobalVars.theWriteTerminationCharactersOfRS232) }, //https://stackoverflow.com/questions/2801509/uint32-tryparse-hex-number-not-working/3570612#3570612     https://stackoverflow.com/questions/16117043/regular-expression-replace-in-c-sharp/16117150#16117150
+                { "terminateR|TerminationCharactersOfRead=",  "Termination Characters of Serial  When Read  (Default 0x0A(\"\\n\"))", v =>  Byte.TryParse(Regex.Replace(v,@"0[x,X]",""),NumberStyles.HexNumber,/*CultureInfo.CurrentCulture*/null,out GlobalVars.theReadTerminationCharactersOfRS232) },
 
                 //Common
                 { "C|cmdstr|CommandString=", "command(s) to send to the device", v =>  GlobalVars.VISA_CLI_Option_CommandString = v },
@@ -101,15 +106,30 @@ namespace VISA_CLI
         public static void SetSerialAttribute(ref MessageBasedSession mbs)
         {
             SerialSession ser = (SerialSession)mbs;
-            ser.BaudRate = GlobalVars.VISA_CLI_Option_SerialBaudRate; //设置速率
-            ser.DataBits = GlobalVars.VISA_CLI_Option_SerialDataBits;      //数据位
-            ser.StopBits = GlobalVars.VISA_CLI_Option_SerialStopBits; //停止位 
-            ser.Parity = GlobalVars.VISA_CLI_Option_SerialParity; //校验     NONE 0  Odd 1  Even 2 Mark 3 Space 4
-            ser.FlowControl = GlobalVars.VISA_CLI_Option_SerialFlowControl; //Flow Control  NONE 0  XON/XOFF 1   使用 NI I/O Trace 监视   VISA Test Panel 设置时得到
+                        ser.BaudRate = GlobalVars.VISA_CLI_Option_SerialBaudRate; //设置速率
+                        ser.DataBits = GlobalVars.VISA_CLI_Option_SerialDataBits; //数据位
+                        ser.StopBits = GlobalVars.VISA_CLI_Option_SerialStopBits; //停止位 
+                          ser.Parity = GlobalVars.VISA_CLI_Option_SerialParity;   //校验     NONE 0  Odd 1  Even 2 Mark 3 Space 4
+                     ser.FlowControl = GlobalVars.VISA_CLI_Option_SerialFlowControl;   //Flow Control  NONE 0  XON/XOFF 1   使用 NI I/O Trace 监视   VISA Test Panel 设置时得到
+            ser.TerminationCharacter = GlobalVars.theReadTerminationCharactersOfRS232; //结束符，针对每个串口只能设置唯一的结束符,此处留给 Read操作,Write操作直接手动在命令末尾加指定的结束符
+                 ser.ReadTermination = GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenRead;  // 读回结束符选择
+                                                                                                    //VI_ATTR_ASRL_END_IN indicates the method used to terminate read operations
+                ser.WriteTermination = GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenWrite; // 写入结束符选择(ser.TerminationCharacter 定义的终止符优先给读回终止符, 写入终止符由 --stmW=2 和 --terminateW="0x0A" 共同指定,若--terminateW不指定,默认使用0x0aA）
+                                                                                                    // VI_ATTR_ASRL_END_OUT indicates the method used to terminate write operations
             if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
             {
-                Console.WriteLine("当前正使用COM通信,当前设置为:\n速率" + GlobalVars.VISA_CLI_Option_SerialBaudRate.ToString() + "\n数据位:" + GlobalVars.VISA_CLI_Option_SerialDataBits.ToString() + "\n停止位:" + (((int)GlobalVars.VISA_CLI_Option_SerialStopBits) / 10).ToString() + "\n校验方式(Parity):" + GlobalVars.VISA_CLI_Option_SerialParityEnumList[((int)GlobalVars.VISA_CLI_Option_SerialParity)] + "\nFlowControl:" + GlobalVars.VISA_CLI_Option_SerialFlowControlEnumList[((int)GlobalVars.VISA_CLI_Option_SerialFlowControl)] + "\n\n请确保仪器设置与本设置相符",
-                  "当前通讯设置");
+                Console.WriteLine("当前正使用COM通信,当前设置为:\n速率 : " + GlobalVars.VISA_CLI_Option_SerialBaudRate.ToString()+ " bps"
+                    + "\n数据位 : " + GlobalVars.VISA_CLI_Option_SerialDataBits.ToString() 
+                    + "\n停止位 : " + (((int)GlobalVars.VISA_CLI_Option_SerialStopBits) / 10).ToString() 
+                    + "\n校验方式(Parity) : " + GlobalVars.VISA_CLI_Option_SerialParityEnumList[((int)GlobalVars.VISA_CLI_Option_SerialParity)]
+                    + "\nFlowControl : " + GlobalVars.VISA_CLI_Option_SerialFlowControlEnumList[((int)GlobalVars.VISA_CLI_Option_SerialFlowControl)]
+                    + "\nTerminationCharacter : 0x" + GlobalVars.theReadTerminationCharactersOfRS232.ToString("X2") //https://stackoverflow.com/questions/5426582/turn-byte-into-two-digit-hexadecimal-number-just-using-tostring/5426587#5426587
+                    + "\nTerminationCharactersOfRead : 0x" + GlobalVars.theReadTerminationCharactersOfRS232.ToString("X2")
+                    + "\nTerminationCharactersOfWrite : 0x" + GlobalVars.theWriteTerminationCharactersOfRS232.ToString("X2")
+                    + "\nSerialTerminationMethodOfRead : " + GlobalVars.VISA_CLI_Option_SerialTerminationMethodEnumList[((int)GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenRead)]
+                    + "\nSerialTerminationMethodOfWrite : " + GlobalVars.VISA_CLI_Option_SerialTerminationMethodEnumList[((int)GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenWrite)]
+                    + "\n\n请确保仪器设置与本设置相符"
+                                 );
             }
         }
         public static int ListAllGPIBDevice()
@@ -224,7 +244,11 @@ namespace VISA_CLI
                 if (GlobalVars.currentInterfaceType == "SERIAL")//SERIAL 接口 
                 {
                     SetSerialAttribute(ref GlobalVars.mbSession);  //  设置SERIAL
-                    GlobalVars.VISA_CLI_Option_CommandString += GlobalVars.theTerminationCharactersOfRS232; // 更新要发送的命令，末尾加换行符
+                    if (SerialTerminationMethod.TerminationCharacter == GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenWrite)  //如果用户指定了要使用写入终止符
+                    {
+                        GlobalVars.VISA_CLI_Option_CommandString += System.Text.Encoding.ASCII.GetString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 });//GlobalVars.theWriteTerminationCharactersOfRS232.ToString(); // 更新要发送的命令，末尾加指定的结束符,此处手动添加,系统中终止符只能由  ser.TerminationCharacter 统一设定,为了灵活性,将这一设置让给Read操作，Write操作直接手动在此处在命令末尾加指定的结束符 
+                                                                                                                                                                    //https://stackoverflow.com/questions/22135275/how-to-convert-a-single-byte-to-a-string/22135328#22135328
+                    }
                 }
                 GlobalVars.mbSession.Timeout = GlobalVars.VISASessionTimeout; //设置超时
                 //priority  ?
@@ -349,9 +373,11 @@ namespace VISA_CLI
 
         //使用串口 Mode.SERIAL
         public static short VISA_CLI_Option_Serial_PortNumber= -1; // serial port number
-             //对RS232接口,命令后必须加 LF  作为结束  0x0A
-        public static String theTerminationCharactersOfRS232 = "\n";
-            //RS232设置用
+       //对RS232接口,发送命令时可能需要加特定字符  作为结束 例如 LF(\n <==> 0x0A)  CR（\r <==> 0x0D)等        
+        public static Byte theWriteTerminationCharactersOfRS232 = 0x0A;
+             //读取时的结束字符 1 字节
+        public static Byte theReadTerminationCharactersOfRS232  = 0x0A;
+        //RS232设置用
         public static Int32 VISA_CLI_Option_SerialBaudRate = 19200; //Serial速率
         public static short VISA_CLI_Option_SerialDataBits = 8; //数据位
         public static StopBitType VISA_CLI_Option_SerialStopBits = (StopBitType)10; //停止位
@@ -359,6 +385,9 @@ namespace VISA_CLI
         public static Parity VISA_CLI_Option_SerialParity = (Parity)0; //校验     NONE 0  Odd 1  Even 2 Mark 3 Space 4
         public static List<String> VISA_CLI_Option_SerialFlowControlEnumList = new List<String>(new String[] { "NONE", "XON/XOFF" }); //FlowControl方式列表
         public static FlowControlTypes VISA_CLI_Option_SerialFlowControl = (FlowControlTypes)0; ////Flow Control  NONE 0  XON/XOFF 1   使用 NI I/O Trace 监视   VISA Test Panel 设置时得到
+        public static SerialTerminationMethod VISA_CLI_Option_SerialTerminationMethodWhenRead  = SerialTerminationMethod.TerminationCharacter;//读回结束符选择 None 0   LastBit 1   TerminationCharacter 2   Break 3
+        public static SerialTerminationMethod VISA_CLI_Option_SerialTerminationMethodWhenWrite = SerialTerminationMethod.None;              //写入结束符选择 None 0   LastBit 1   TerminationCharacter 2   Break 3
+        public static List<String> VISA_CLI_Option_SerialTerminationMethodEnumList = new List<String>(new String[] { "None", "LastBit", "TerminationCharacter", "Break" });
 
         //Common
         public static String VISA_CLI_Option_CommandString = null;         //command to send
