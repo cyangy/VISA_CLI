@@ -49,6 +49,14 @@ namespace VISA_CLI
                    //{ "terminateR|TerminationCharactersOfRead=",  "Termination Characters of Serial  When Read  (Default 0x0A(\"\\n\"))", v =>   GlobalVars.theReadTerminationCharactersOfRS232 = Convert.ToByte(v,16) },
                 { "terminateW|TerminationCharactersOfWrite=", "Termination Characters of Serial  When Write (Default 0x0A(\"\\n\"))", v =>  Byte.TryParse(Regex.Replace(v,@"0[x,X]",""),NumberStyles.HexNumber,/*CultureInfo.CurrentCulture*/null,out GlobalVars.theWriteTerminationCharactersOfRS232) }, //https://stackoverflow.com/questions/2801509/uint32-tryparse-hex-number-not-working/3570612#3570612     https://stackoverflow.com/questions/16117043/regular-expression-replace-in-c-sharp/16117150#16117150
                 { "terminateR|TerminationCharactersOfRead=",  "Termination Characters of Serial  When Read  (Default 0x0A(\"\\n\"))", v =>  Byte.TryParse(Regex.Replace(v,@"0[x,X]",""),NumberStyles.HexNumber,/*CultureInfo.CurrentCulture*/null,out GlobalVars.theReadTerminationCharactersOfRS232) },
+                
+                
+                //USBTMC  USB0::0x0699::0x0415::C022855::INSTR
+                { "U|useUSBTMC", "USBTMC mode", v => GlobalVars.VISA_CLI_Option_CurrentMode = (short)Mode.USBTMC},
+                { "usb|usbBoardIndex", "USB board index(Default 0)", v => short.TryParse(v,out GlobalVars.VISA_CLI_Option_USB_BoardIndex) },
+                { "vid|usbVID", "USB Vendor ID", v => GlobalVars.VISA_CLI_Option_USB_VID = v},
+                { "pid|usbPID", "USB Model ID", v => GlobalVars.VISA_CLI_Option_USB_PID = v},
+                { "sn|usbSerialNumber", "USB Serial Number", v => GlobalVars.VISA_CLI_Option_USB_SerialNumber = v},
 
                 //Common
                 { "C|cmdstr|CommandString=", "command(s) to send to the device", v =>  GlobalVars.VISA_CLI_Option_CommandString = v },
@@ -98,6 +106,16 @@ namespace VISA_CLI
                     {
                         GlobalVars.VISAResourceName = String.Empty; // 清空原字符串
                         GlobalVars.VISAResourceName = "ASRL" + GlobalVars.VISA_CLI_Option_Serial_PortNumber+ "::INSTR";
+                        return true;
+                    }
+                case ((short)Mode.USBTMC):     //USBTMC  USB0::0x0699::0x0415::C022855::INSTR  与 USB0::0x699::0x415::C022855::INSTR 是一样的
+                    {
+                        GlobalVars.VISAResourceName = String.Empty; // 清空原字符串
+                        GlobalVars.VISAResourceName = "USB"+GlobalVars.VISA_CLI_Option_USB_BoardIndex.ToString()
+                                                       + "::0x" + Regex.Replace(GlobalVars.VISA_CLI_Option_USB_VID, @"0[x,X]", "")
+                                                       + "::0x" + Regex.Replace(GlobalVars.VISA_CLI_Option_USB_PID, @"0[x,X]", "")
+                                                       + GlobalVars.VISA_CLI_Option_USB_SerialNumber
+                                                       + "::INSTR";
                         return true;
                     }
                 default : return false;
@@ -218,11 +236,11 @@ namespace VISA_CLI
                 Console.Error.WriteLine("       {0} -h for more information", System.AppDomain.CurrentDomain.FriendlyName);
                 return -1;
             }                   //-ls                                            GPIB                                                    Serial
-            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0)) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
+            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) && (String.IsNullOrEmpty( GlobalVars.VISA_CLI_Option_USB_VID))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
             {
                 var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
                 Console.SetError(standardError);
-                Console.Error.WriteLine("GPIB Primary Address or Serial Port Number  must be specified!");
+                Console.Error.WriteLine("GPIB Primary Address or Serial Port Number or USB PID/VID/SN must be specified!");
                 return -1;
             }
             //尝试进行操作
@@ -388,6 +406,12 @@ namespace VISA_CLI
         public static SerialTerminationMethod VISA_CLI_Option_SerialTerminationMethodWhenRead  = SerialTerminationMethod.TerminationCharacter;//读回结束符选择 None 0   LastBit 1   TerminationCharacter 2   Break 3
         public static SerialTerminationMethod VISA_CLI_Option_SerialTerminationMethodWhenWrite = SerialTerminationMethod.None;              //写入结束符选择 None 0   LastBit 1   TerminationCharacter 2   Break 3
         public static List<String> VISA_CLI_Option_SerialTerminationMethodEnumList = new List<String>(new String[] { "None", "LastBit", "TerminationCharacter", "Break" });
+
+        //USB
+        public static short VISA_CLI_Option_USB_BoardIndex = 0;
+        public static String VISA_CLI_Option_USB_VID = String.Empty;
+        public static String VISA_CLI_Option_USB_PID = String.Empty;
+        public static String VISA_CLI_Option_USB_SerialNumber = String.Empty;
 
         //Common
         public static String VISA_CLI_Option_CommandString = null;         //command to send
