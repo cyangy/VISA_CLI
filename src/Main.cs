@@ -51,13 +51,13 @@ namespace VISA_CLI
                 { "terminateR|TerminationCharactersOfRead=",  "Termination Characters of Serial  When Read  (Default 0x0A(\"\\n\"))", v =>  Byte.TryParse(Regex.Replace(v,@"0[x,X]",""),NumberStyles.HexNumber,/*CultureInfo.CurrentCulture*/null,out GlobalVars.theReadTerminationCharactersOfRS232) },
                 
                 
-                //USBTMC  USB0::0x0699::0x0415::C022855::INSTR
+                //USBTMC  USB0::0x0699::0x0415::C022855::INSTR  少了等号=导致出现 解析为 USB0::0xvid::0xpid::sn::INSTR
                 { "U|useUSBTMC", "USBTMC mode", v => GlobalVars.VISA_CLI_Option_CurrentMode = (short)Mode.USBTMC},
-                { "usb|usbBoardIndex", "USB board index(Default 0)", v => short.TryParse(v,out GlobalVars.VISA_CLI_Option_USB_BoardIndex) },
-                { "vid|usbVID", "USB Vendor ID", v => GlobalVars.VISA_CLI_Option_USB_VID = v},
-                { "pid|usbPID", "USB Model ID", v => GlobalVars.VISA_CLI_Option_USB_PID = v},
-                { "sn|usbSerialNumber", "USB Serial Number", v => GlobalVars.VISA_CLI_Option_USB_SerialNumber = v},
-
+                { "usb|usbBoardIndex=", "USB board index(Default 0)", v => short.TryParse(v,out GlobalVars.VISA_CLI_Option_USB_BoardIndex) },
+                { "vid|usbVID=", "USB Vendor ID", v =>  GlobalVars.VISA_CLI_Option_USB_VID = v},
+                { "pid|usbPID=", "USB Model ID", v => GlobalVars.VISA_CLI_Option_USB_PID = v},
+                { "sn|usbSerialNumber=", "USB Serial Number", v => GlobalVars.VISA_CLI_Option_USB_SerialNumber = v},
+                
                 //TCPIP  TCPIP0::192.168.1.2::inst0::INSTR
                 { "T|useTCPIP", "TCPIP mode", v => GlobalVars.VISA_CLI_Option_CurrentMode = (short)Mode.TCPIP},
                 { "tcpip|tcpipAdapterBoardIndex=", "TCPIP Adapter board index(Default 0)", v => short.TryParse(v,out GlobalVars.VISA_CLI_Option_TCPIP_BoardIndex) },
@@ -121,7 +121,7 @@ namespace VISA_CLI
                         GlobalVars.VISAResourceName = "USB"+GlobalVars.VISA_CLI_Option_USB_BoardIndex.ToString()
                                                        + "::0x" + Regex.Replace(GlobalVars.VISA_CLI_Option_USB_VID, @"0[x,X]", "")
                                                        + "::0x" + Regex.Replace(GlobalVars.VISA_CLI_Option_USB_PID, @"0[x,X]", "")
-                                                       + GlobalVars.VISA_CLI_Option_USB_SerialNumber
+                                                       + "::" + GlobalVars.VISA_CLI_Option_USB_SerialNumber
                                                        + "::INSTR";
                         return true;
                     }
