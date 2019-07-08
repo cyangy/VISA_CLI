@@ -166,7 +166,7 @@ namespace VISA_CLI
                                  );
             }
         }
-        public static int ListAllGPIBDevice()
+        public static void ListAllGPIBDevice()
         {                                                                                                 //GPIB0::2::INSTR
             String[] resources = ResourceManager.GetLocalManager().FindResources("GPIB[0-9]::[0-9]*::INSTR");//GPIB[0-9]::[0-9]*::?*   ?*
             foreach (String res in resources)
@@ -176,7 +176,8 @@ namespace VISA_CLI
                 String IDN = mbs.Query("*IDN?");
                 Console.Write(res.PadRight(20) +"   "+ IDN);
             }
-            return 0;
+            //此处不能用return,return后程序继续执行,导致出现 ： 指定的资源引用非法。解析出错。  VISA error code -1073807342 (0xBFFF0012), ErrorInvalidResourceName  viParseRsrcEx (0x00001001, NULL, 0 (0x0), 0 (0x0), "", "", "")
+            Environment.Exit(0);
         }
         public static void  Write()
         {
