@@ -76,6 +76,7 @@ namespace VISA_CLI
                 { "N|rBytes|ReadBackNbytes=", "how many bytes should be read back", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_ReadBackNbytes ) },
                 { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes ) },
                 { "L|ls|ListAllInstruments", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
+                { "X|dcl|DeviceClear", "Send Device Clear before commands send ", v =>  GlobalVars.VISA_CLI_Option_isDeviceClearSend = v != null },
                 { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
@@ -185,15 +186,23 @@ namespace VISA_CLI
             //此处不能用return,return后程序继续执行,导致出现 ： 指定的资源引用非法。解析出错。  VISA error code -1073807342 (0xBFFF0012), ErrorInvalidResourceName  viParseRsrcEx (0x00001001, NULL, 0 (0x0), 0 (0x0), "", "", "")
             Environment.Exit(0);
         }
+        public static void  SendDeviceClear()
+        {    
+            if ((GlobalVars.VISA_CLI_Option_CurrentMode == (short)Mode.GPIB) || GlobalVars.VISA_CLI_Option_isDeviceClearSend)
+            {
+                GlobalVars.mbSession.Clear(); //it's better send a Device Clear before operation
+            }
+        }
         public static void  Write()
         {
-            GlobalVars.mbSession.Clear(); //it's better send a Device Clear before operation
-            GlobalVars.mbSession.Write(Encoding.Default.GetBytes(GlobalVars.VISA_CLI_Option_CommandString)); // use Write(Byte[]) instead of Write(String)
+            SendDeviceClear();
+             GlobalVars.mbSession.Write(Encoding.Default.GetBytes(GlobalVars.VISA_CLI_Option_CommandString)); // use Write(Byte[]) instead of Write(String)
             //GlobalVars.mbSession.Write(GlobalVars.VISA_CLI_Option_CommandString); // use Write(Byte[]) instead of Write(String)
         }
         public static void Read()
         {
             GlobalVars.VISA_CLI_ReadBackBuffer = null;
+            SendDeviceClear();
             // GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadString(GlobalVars.VISA_CLI_Option_ReadBackNbytes);
             GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadByteArray(GlobalVars.VISA_CLI_Option_ReadBackNbytes);
             //https://stackoverflow.com/questions/2530951/remove-first-16-bytes/2530994#2530994
@@ -455,6 +464,7 @@ namespace VISA_CLI
         public static int VISA_CLI_Option_ReadBackNbytes = 1024;      //read specified length of response,default is 1024 bytes
         public static int VISA_CLI_Option_SkipFirstNbytes = 0;     //for some system(DCA86100,AQ6370,etc.), transfered data via GPIB contain extra bytes,user can skip them
 
+        public static bool VISA_CLI_Option_isDeviceClearSend = false; //是否发送DeviceClear命令,对GPIB接口默认情况为发送
         public static   MessageBasedSession mbSession;
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
