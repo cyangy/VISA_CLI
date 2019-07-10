@@ -166,15 +166,21 @@ namespace VISA_CLI
                                  );
             }
         }
-        public static void ListAllGPIBDevice()
-        {                                                                                                 //GPIB0::2::INSTR
-            String[] resources = ResourceManager.GetLocalManager().FindResources("GPIB[0-9]::[0-9]*::INSTR");//GPIB[0-9]::[0-9]*::?*   ?*
+        public static void ListAll_TMC_Devices()
+        { 
+             //对满足 TMC的设备都支持-ls列出                                                                                            
+             // (GPIB[0-9]{1,}::[0-9]{1,}::INSTR|TCPIP[0-9]{1,}::.*::INSTR|USB[0-9]{1,}.*::INSTR)     USB0::0x0699::0x0415::C022855::INSTR TCPIP0::192.168.1.2::inst0::INSTR  GPIB0::2::INSTR            https://www.regextester.com/93690
+            String[] resources = ResourceManager.GetLocalManager().FindResources("?*");
+            Regex regex = new Regex(@"(GPIB[0-9]{1,}::[0-9]{1,}::INSTR|TCPIP[0-9]{1,}::.*::INSTR|USB[0-9]{1,}.*::INSTR)", RegexOptions.IgnoreCase); //由于该正则表达式在 FindResources("")中不被识别,直接被解析为了 viFindRsrc (0x00001001, "(GPIB[0-9]{1,}::[0-9]{1,}::INSTR|TCPIP[0-9]{1,}::.*::INSTR|USB[0-9]{1,}.*::INSTR)", 0x00000000, 0 (0x0), "") ,因此另用正则表达式匹配 https://www.dotnetperls.com/regex
             foreach (String res in resources)
             {
-                MessageBasedSession mbs = (MessageBasedSession)ResourceManager.GetLocalManager().Open(res);
-                mbs.Clear(); //it's better send a Device Clear before operation
-                String IDN = mbs.Query("*IDN?");
-                Console.Write(res.PadRight(20) +"   "+ IDN);
+                if (regex.Match(res).Success)
+                {
+                    MessageBasedSession mbs = (MessageBasedSession)ResourceManager.GetLocalManager().Open(res);
+                    mbs.Clear(); //it's better send a Device Clear before operation
+                    String IDN = mbs.Query("*IDN?");
+                    Console.Write(res.PadRight(20) + "   " + IDN);
+                }
             }
             //此处不能用return,return后程序继续执行,导致出现 ： 指定的资源引用非法。解析出错。  VISA error code -1073807342 (0xBFFF0012), ErrorInvalidResourceName  viParseRsrcEx (0x00001001, NULL, 0 (0x0), 0 (0x0), "", "", "")
             Environment.Exit(0);
@@ -244,8 +250,8 @@ namespace VISA_CLI
             VISA_CLI.ParseArgs(args);
 
             //根据各参数开始执行命令
-            //首先根据用户需求生成相应的资源名称(GPIB0::2::INSTR、ASRL2::INSTR)
-            if(!GenerateVISAResourceName(GlobalVars.VISA_CLI_Option_CurrentMode)) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
+            //首先根据用户需求生成相应的资源名称,如果未指定 -ls参数 且未指定 GPIB / Serial / USB / TCPIP 中的任何一种模式,显示错误信息
+            if(!(GlobalVars.VISA_CLI_Option_ListInstruments) && !(GenerateVISAResourceName(GlobalVars.VISA_CLI_Option_CurrentMode))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
             {
                 var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
                 Console.SetError(standardError);
@@ -253,7 +259,8 @@ namespace VISA_CLI
                 Console.Error.WriteLine("       {0} -h for more information", System.AppDomain.CurrentDomain.FriendlyName);
                 return -1;
             }                   //-ls                                            GPIB                                                    Serial                                                                                                            USB                                                                                                                                                  TCPIP
-            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_VID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_PID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_SerialNumber)) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_TCPIP_IPAddressOrHostName))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
+             // 如果未指定ls参数则 GPIB / Serial / USB / TCPIP 必须且只能指定一个,如果多个模式被指定,则最后指定的模式生效
+            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && ( (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_VID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_PID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_SerialNumber)) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_TCPIP_IPAddressOrHostName)))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
             {
                 var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
                 Console.SetError(standardError);
@@ -263,7 +270,7 @@ namespace VISA_CLI
             //尝试进行操作
             try
             {
-                if (GlobalVars.VISA_CLI_Option_ListInstruments) { ListAllGPIBDevice(); } //list all device then exit
+                if (GlobalVars.VISA_CLI_Option_ListInstruments) { ListAll_TMC_Devices(); } //list all device then exit
 
                 // GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
                 GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
