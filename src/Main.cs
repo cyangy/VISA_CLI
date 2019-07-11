@@ -276,6 +276,42 @@ namespace VISA_CLI
             }
             return true;
         }
+
+        public static bool OperateOnce()
+        {
+            if (GlobalVars.VISA_CLI_Option_isQueryCommand && !String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))  // query
+            {
+                Query();
+                GlobalVars.VISA_CLI_Option_JustWriteCommand = false;
+                GlobalVars.VISA_CLI_Option_JustReadBack = false;
+            }
+            else if (GlobalVars.VISA_CLI_Option_JustReadBack) //Just Read Back
+            {
+                Read();
+                GlobalVars.VISA_CLI_Option_JustWriteCommand = false;
+            }
+            else if (GlobalVars.VISA_CLI_Option_JustWriteCommand && !String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString)) //Just write  
+            {
+                Write();
+            }
+
+            // 读回内容不为空
+            if (!(GlobalVars.VISA_CLI_ReadBackBuffer == null || GlobalVars.VISA_CLI_ReadBackBuffer.Length == 0)) //save respond to file
+            {
+                if (!String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_FileName)) // 如果指定了文件名则保存内容到文件
+                {
+                    SaveResponseToFile();
+                }
+                else
+                {
+                    //https://www.cnblogs.com/michaelxu/archive/2007/05/14/745881.html
+                    //Console.WriteLine(System.Text.Encoding.ASCII.GetString(GlobalVars.VISA_CLI_ReadBackBuffer));//
+                    Console.Write(System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0'));//
+                }
+            }
+            return true;
+        }
+		
         static Int32 Main(string[] args)
         {
             Stopwatch sw = Stopwatch.StartNew();
@@ -308,6 +344,7 @@ namespace VISA_CLI
                 // GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
                 GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
                 GlobalVars.currentInterfaceType = GlobalVars.mbSession.HardwareInterfaceType.ToString().ToUpper();//GPIB SERIAL
+
                 if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
                 {
                     Console.WriteLine("当前使用硬件接口类型:{0}", GlobalVars.currentInterfaceType);
@@ -327,37 +364,10 @@ namespace VISA_CLI
                 }
 
                 GlobalVars.mbSession.Timeout = GlobalVars.VISASessionTimeout; //设置超时
-                
-                if (GlobalVars.VISA_CLI_Option_isQueryCommand && !String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))  // query
-                {
-                    Query();
-                    GlobalVars.VISA_CLI_Option_JustWriteCommand = false;
-                    GlobalVars.VISA_CLI_Option_JustReadBack = false;
-                }
-                else if(GlobalVars.VISA_CLI_Option_JustReadBack) //Just Read Back
-                {
-                    Read();
-                    GlobalVars.VISA_CLI_Option_JustWriteCommand = false;
-                }
-                else if(GlobalVars.VISA_CLI_Option_JustWriteCommand && !String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString)) //Just write  
-                {
-                    Write(); 
-                }
 
-                // 读回内容不为空
-                if(!(GlobalVars.VISA_CLI_ReadBackBuffer == null || GlobalVars.VISA_CLI_ReadBackBuffer.Length == 0)  ) //save respond to file
-                {
-                    if (!String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_FileName)) // 如果指定了文件名则保存内容到文件
-                    {
-                        SaveResponseToFile();
-                    }
-                    else
-                    {
-                        //https://www.cnblogs.com/michaelxu/archive/2007/05/14/745881.html
-                        //Console.WriteLine(System.Text.Encoding.ASCII.GetString(GlobalVars.VISA_CLI_ReadBackBuffer));//
-                        Console.Write(System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0'));//
-                    }
-                }
+                //执行操作
+                OperateOnce();
+
             }
             catch (InvalidCastException) //打开了不支持的设备
             {
