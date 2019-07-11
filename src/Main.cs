@@ -249,6 +249,33 @@ namespace VISA_CLI
                 Console.WriteLine("new file name is :{0}", GlobalVars.VISA_CLI_Option_FileName);
             }
         }
+
+        public static bool SaveResponseToFile()
+        {
+            //https://docs.microsoft.com/en-us/dotnet/api/system.io.file.exists?view=netframework-4.7.2
+            if (File.Exists(GlobalVars.VISA_CLI_Option_FileName) && !(GlobalVars.VISA_CLI_Option_OverwriteFile)) // file exist but not overwrite
+            {
+                GenerateNewFileName(); //new file name
+            }
+            // file exist but overwrite
+            // https://www.cnblogs.com/ybwang/archive/2010/06/12/1757409.html
+            // https://stackoverflow.com/questions/17967509/binarywriter-to-overwrite-an-existing-file-c-sharp/17967581#17967581
+            FileStream fs = File.Open(GlobalVars.VISA_CLI_Option_FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            BinaryWriter bw = new BinaryWriter(fs);
+            //bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(GlobalVars.VISA_CLI_Option_SkipFirstNbytes)),0,GlobalVars.VISA_CLI_ReadBackBuffer.Length); 
+            // bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(GlobalVars.VISA_CLI_Option_SkipFirstNbytes)));
+
+
+            bw.Write(GlobalVars.VISA_CLI_ReadBackBuffer);
+            bw.Close(); //Close
+            fs.Close(); //Close
+            if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
+            {
+                FileInfo fi = new FileInfo(GlobalVars.VISA_CLI_Option_FileName);
+                Console.WriteLine("write to  file  :{0}  completely, {1} bytes total", GlobalVars.VISA_CLI_Option_FileName, fi.Length);
+            }
+            return true;
+        }
         static Int32 Main(string[] args)
         {
             Stopwatch sw = Stopwatch.StartNew();
@@ -298,6 +325,7 @@ namespace VISA_CLI
                                                                                                                                                                     //https://stackoverflow.com/questions/22135275/how-to-convert-a-single-byte-to-a-string/22135328#22135328
                     }
                 }
+
                 GlobalVars.mbSession.Timeout = GlobalVars.VISASessionTimeout; //设置超时
                 
                 if (GlobalVars.VISA_CLI_Option_isQueryCommand && !String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))  // query
@@ -316,45 +344,20 @@ namespace VISA_CLI
                     Write(); 
                 }
 
-                // save to file
-                if(!String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_FileName) && !(GlobalVars.VISA_CLI_ReadBackBuffer == null || GlobalVars.VISA_CLI_ReadBackBuffer.Length == 0)  ) //save respond to file
+                // 读回内容不为空
+                if(!(GlobalVars.VISA_CLI_ReadBackBuffer == null || GlobalVars.VISA_CLI_ReadBackBuffer.Length == 0)  ) //save respond to file
                 {
-                    //https://docs.microsoft.com/en-us/dotnet/api/system.io.file.exists?view=netframework-4.7.2
-                    if (File.Exists(GlobalVars.VISA_CLI_Option_FileName) && !(GlobalVars.VISA_CLI_Option_OverwriteFile)) // file exist but not overwrite
+                    if (!String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_FileName)) // 如果指定了文件名则保存内容到文件
                     {
-                        GenerateNewFileName(); //new file name
+                        SaveResponseToFile();
                     }
-                    // file exist but overwrite
-                    // https://www.cnblogs.com/ybwang/archive/2010/06/12/1757409.html
-                    // https://stackoverflow.com/questions/17967509/binarywriter-to-overwrite-an-existing-file-c-sharp/17967581#17967581
-                    FileStream fs = File.Open(GlobalVars.VISA_CLI_Option_FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                    BinaryWriter bw = new BinaryWriter(fs);
-                    //bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(GlobalVars.VISA_CLI_Option_SkipFirstNbytes)),0,GlobalVars.VISA_CLI_ReadBackBuffer.Length); 
-                    // bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(GlobalVars.VISA_CLI_Option_SkipFirstNbytes)));
-
-
-                    bw.Write(GlobalVars.VISA_CLI_ReadBackBuffer);
-                    //bw.Write(
-                    bw.Close(); //Close
-                    fs.Close(); //Close
-                    if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
+                    else
                     {
-                        FileInfo fi = new FileInfo(GlobalVars.VISA_CLI_Option_FileName);
-                        Console.WriteLine("write to  file  :{0}  completely, {1} bytes total", GlobalVars.VISA_CLI_Option_FileName,fi.Length);
+                        //https://www.cnblogs.com/michaelxu/archive/2007/05/14/745881.html
+                        //Console.WriteLine(System.Text.Encoding.ASCII.GetString(GlobalVars.VISA_CLI_ReadBackBuffer));//
+                        Console.Write(System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0'));//
                     }
-
                 }
-                else if(!(GlobalVars.VISA_CLI_ReadBackBuffer == null || GlobalVars.VISA_CLI_ReadBackBuffer.Length == 0))
-                {
-                    //https://www.cnblogs.com/michaelxu/archive/2007/05/14/745881.html
-                    //Console.WriteLine(System.Text.Encoding.ASCII.GetString(GlobalVars.VISA_CLI_ReadBackBuffer));//
-                    Console.Write(System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0'));//
-
-                }
-
-
-
-
             }
             catch (InvalidCastException) //打开了不支持的设备
             {
