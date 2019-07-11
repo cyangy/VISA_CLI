@@ -78,6 +78,7 @@ namespace VISA_CLI
                 { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes ) },
                 { "L|ls|ListAllInstruments", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
                 { "X|dcl|DeviceClear", "Send Device Clear before commands send ", v =>  GlobalVars.VISA_CLI_Option_isDeviceClearSend = v != null },
+                { "I|InteractiveMode", "Interactive Mode ", v =>  GlobalVars.VISA_CLI_Option_isInteractiveMode = v != null },
                 { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
@@ -313,32 +314,34 @@ namespace VISA_CLI
             return true;
         }
 		
-        static Int32 Main(string[] args)
+        public static bool Interactive()
         {
-            
-            // test interactive
-            var prompt = GlobalVars.InteractivePromptString+">";
+            var prompt = GlobalVars.InteractivePromptString + ">";
             var startupMsg = "Now will enter interactive mode......\n       Tips: Type commands like linux shell (Tab to auto complete | Ctrl + C to quit) then press enter to write to device \n or Press Enter to read response";
             List<string> completionList = new List<string> { "test", "contractearnings", "cancels", "cancellationInfo", "cantankerous" };
             InteractivePrompt.Run(
-                ((strCmd,promptt, listCmd) =>
+                ((strCmd, promptt, listCmd) =>
                 {
                     //return strCmd.Length.ToString() + Environment.NewLine;
                     //var handleInput = "(((--> " + strCmd + " <--)))";
                     //return handleInput + Environment.NewLine;
-                   if(!String.IsNullOrWhiteSpace(strCmd)){
-                        //Write();
-                        return "cmdStr is " + strCmd + " Write"+Environment.NewLine;
-                    }else
+                    if (!String.IsNullOrWhiteSpace(strCmd))
                     {
-                        //Read();
-                        return "cmdStr is empty,Read(）" + Environment.NewLine;
+                        GlobalVars.VISA_CLI_Option_CommandString = strCmd;
+                        Write();
+                        return "cmdStr is " + GlobalVars.VISA_CLI_Option_CommandString + " Write" + Environment.NewLine;
+                    }
+                    else
+                    {
+                        Read();
+                        return "cmdStr is empty,Read(）" + Environment.NewLine + "ReadBack buffer is:" + Environment.NewLine + System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0');
                     }
                 }), prompt, startupMsg, completionList);
-
-
-            // test interactive 
-
+            return true;
+        }
+        static Int32 Main(string[] args)
+        {
+            
             Stopwatch sw = Stopwatch.StartNew();
             //尝试解析各参数
             VISA_CLI.ParseArgs(args);
@@ -391,7 +394,17 @@ namespace VISA_CLI
                 GlobalVars.mbSession.Timeout = GlobalVars.VISASessionTimeout; //设置超时
 
                 //执行操作
-                OperateOnce();
+                /* 和C版本一样，采用两个函数 OperateOnce 与 Interactive, 在其中细分 
+                     ① 如果配置正确 mode/ index....且 cmdstr 且 interactive 被指定, 则先执行相应操作再进入交互模式
+                     ② 如果配置正确 mode/ index....且 无cmdstr 且 interactive 被指定 进入交互模式
+                     ③ 如果配置正确 mode/ index....且 无cmdstr 且 interactive 未指定 询问是否进入交互模式
+                */
+                OperateOnce();  
+                if (GlobalVars.VISA_CLI_Option_isInteractiveMode)
+                {
+                    Interactive();
+                }
+                  
 
             }
             catch (InvalidCastException) //打开了不支持的设备
@@ -479,6 +492,7 @@ namespace VISA_CLI
 
         public static bool VISA_CLI_Option_isDeviceClearSend = false; //是否发送DeviceClear命令,对GPIB接口默认情况为发送
         public static String InteractivePromptString = Regex.Replace(System.AppDomain.CurrentDomain.FriendlyName, @".exe", "");
+        public static bool VISA_CLI_Option_isInteractiveMode = false;  //是否进入交互模式
         public static   MessageBasedSession mbSession;
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
