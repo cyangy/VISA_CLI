@@ -252,9 +252,6 @@ namespace VISA_CLI
         static Int32 Main(string[] args)
         {
             Stopwatch sw = Stopwatch.StartNew();
-            //Console.WriteLine("Hello World!");
-            //myHelp.Show_gpib_help();
-            //Console.ReadLine();
             //尝试解析各参数
             VISA_CLI.ParseArgs(args);
 
@@ -302,7 +299,7 @@ namespace VISA_CLI
                     }
                 }
                 GlobalVars.mbSession.Timeout = GlobalVars.VISASessionTimeout; //设置超时
-                //priority  ?
+                
                 if (GlobalVars.VISA_CLI_Option_isQueryCommand && !String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))  // query
                 {
                     Query();
@@ -371,31 +368,9 @@ namespace VISA_CLI
             }
             finally //不论是否有异常以下代码都会被执行
             {
-                /*
-                Console.WriteLine("Console.WriteLine(GlobalVars.mbSession.Write(\"{0}\"));", GlobalVars.VISA_CLI_Option_CommandString);
-                GlobalVars.mbSession.Write(GlobalVars.VISA_CLI_Option_CommandString);
-                Console.WriteLine("GlobalVars.mbSession.ReadString({0});",GlobalVars.VISA_CLI_Option_ReadBackNbytes);
-                String s = GlobalVars.mbSession.ReadString(GlobalVars.VISA_CLI_Option_ReadBackNbytes);
-                Console.WriteLine("{0} byte request And s.Length={1} byte actually transfered",GlobalVars.VISA_CLI_Option_ReadBackNbytes , s.Length);
-                Console.WriteLine("retrun string is :{0}",s);
-                Console.WriteLine("retrun string skip first {0} bytes  is :{1}",GlobalVars.VISA_CLI_Option_SkipFirstNbytes, String.Join(String.Empty, s.Skip(GlobalVars.VISA_CLI_Option_SkipFirstNbytes))); //https://stackoverflow.com/questions/7186648/how-to-remove-first-10-characters-from-a-string/7186753#7186753
-                Console.WriteLine("retrun string skip last {0} bytes  is :{1}", GlobalVars.VISA_CLI_Option_SkipFirstNbytes, s.Remove(s.Length-GlobalVars.VISA_CLI_Option_SkipFirstNbytes));//https://stackoverflow.com/questions/15564944/remove-the-last-three-characters-from-a-string/15564958#15564958
-                // Console.WriteLine("Console.WriteLine(GlobalVars.mbSession.Query(\"{0}\"));",GlobalVars.VISA_CLI_Option_CommandString);
-                // Console.WriteLine("press ENTER to quit");
-                // Console.ReadLine();
-                // String s = GlobalVars.mbSession.Query(":DISPlay:DATA? JPG", 500000);
-                // Console.WriteLine("50000 byte request And s.Length={0} byte actually transfered", s.Length);
-                // Console.WriteLine(s);
-                // Console.WriteLine("Console.WriteLine(GlobalVars.mbSession.Query(\":DISPlay: DATA ? JPG\", 500000));");
-                // Console.WriteLine("press ENTER to continue");
-                // Console.ReadLine();
-                // GlobalVars.mbSession.Write(":DISPlay: DATA ? JPG");
-                // GlobalVars.mbSession.ReadToFile("1.jpg");
-                // Console.WriteLine("GlobalVars.mbSession.ReadToFile(\"1.jpg\");");
-                // GlobalVars.mbSession.Dispose();
-                */
+
             }
-            //Console.ReadLine();
+            
             sw.Stop();
             if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
             {
