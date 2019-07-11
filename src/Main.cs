@@ -11,6 +11,7 @@ using NationalInstruments.VisaNS;
 using Mono.Options;
 using System.Diagnostics;
 using System.Globalization;  //Byte.TryParse()
+using Cintio;
 
 #if NET40
 using DotNet4_ArraySegment_ToArray_Implement;
@@ -314,6 +315,30 @@ namespace VISA_CLI
 		
         static Int32 Main(string[] args)
         {
+            
+            // test interactive
+            var prompt = GlobalVars.InteractivePromptString+">";
+            var startupMsg = "Now will enter interactive mode......\n       Tips: Type commands like linux shell (Tab to auto complete | Ctrl + C to quit) then press enter to write to device \n or Press Enter to read response";
+            List<string> completionList = new List<string> { "test", "contractearnings", "cancels", "cancellationInfo", "cantankerous" };
+            InteractivePrompt.Run(
+                ((strCmd,promptt, listCmd) =>
+                {
+                    //return strCmd.Length.ToString() + Environment.NewLine;
+                    //var handleInput = "(((--> " + strCmd + " <--)))";
+                    //return handleInput + Environment.NewLine;
+                   if(!String.IsNullOrWhiteSpace(strCmd)){
+                        //Write();
+                        return "cmdStr is " + strCmd + " Write"+Environment.NewLine;
+                    }else
+                    {
+                        //Read();
+                        return "cmdStr is empty,Read(）" + Environment.NewLine;
+                    }
+                }), prompt, startupMsg, completionList);
+
+
+            // test interactive 
+
             Stopwatch sw = Stopwatch.StartNew();
             //尝试解析各参数
             VISA_CLI.ParseArgs(args);
@@ -453,6 +478,7 @@ namespace VISA_CLI
         public static int VISA_CLI_Option_SkipFirstNbytes = 0;     //for some system(DCA86100,AQ6370,etc.), transfered data via GPIB contain extra bytes,user can skip them
 
         public static bool VISA_CLI_Option_isDeviceClearSend = false; //是否发送DeviceClear命令,对GPIB接口默认情况为发送
+        public static String InteractivePromptString = Regex.Replace(System.AppDomain.CurrentDomain.FriendlyName, @".exe", "");
         public static   MessageBasedSession mbSession;
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
