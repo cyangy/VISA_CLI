@@ -185,7 +185,10 @@ namespace Cintio
         public static void Run(Func<string, List<char>, List<string>, string> lambda, string prompt, string startupMsg, List<string> completionList = null)
         {
             _prompt = prompt;
-            Console.WriteLine(startupMsg);
+            if (!String.IsNullOrEmpty(startupMsg))
+            {
+                Console.WriteLine(startupMsg);
+            }
             List<List<char>> inputHistory = new List<List<char>>();
             IEnumerator<string> wordIterator = null;
 

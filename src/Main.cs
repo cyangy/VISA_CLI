@@ -316,8 +316,13 @@ namespace VISA_CLI
 		
         public static bool Interactive()
         {
+            GlobalVars.CounterOfEnterInteractiveMode += 1; //每次进入交互模式计数器加一
             var prompt = GlobalVars.InteractivePromptString + ">";
             var startupMsg = "Now will enter interactive mode......\n       Tips: Type commands like linux shell (Tab to auto complete | Ctrl + C to quit) then press enter to write to device \n or Press Enter to read response";
+            if(GlobalVars.CounterOfEnterInteractiveMode > 1) //如果交互模式计数器大于1,不要打印提示消息
+            {
+                startupMsg = String.Empty;
+            }
             List<string> completionList = new List<string> { "test", "contractearnings", "cancels", "cancellationInfo", "cantankerous" };
             InteractivePrompt.Run(
                 ((strCmd, promptt, listCmd) =>
@@ -400,11 +405,19 @@ namespace VISA_CLI
                      ③ 如果配置正确 mode/ index....且 无cmdstr 且 interactive 未指定 询问是否进入交互模式
                 */
                 OperateOnce();  
-                if (GlobalVars.VISA_CLI_Option_isInteractiveMode)
-                {
-                    Interactive();
-                }
-                  
+                //进入Interactive模式,可能会有异常发生,例如读取超时异常,一般情况下程序将会退出;本程序设置为即使有异常发生也继续执行 https://forums.asp.net/t/1626951.aspx?How+to+continue+after+exception+occurred+in+C+
+                while (GlobalVars.VISA_CLI_Option_isInteractiveMode)
+                    {
+                        try
+                        {
+                            Interactive();
+                        }
+                        catch (Exception exp)
+                        {
+                            Console.WriteLine(exp.Message);
+                            continue;
+                        }
+                    }            
 
             }
             catch (InvalidCastException) //打开了不支持的设备
@@ -493,6 +506,7 @@ namespace VISA_CLI
         public static bool VISA_CLI_Option_isDeviceClearSend = false; //是否发送DeviceClear命令,对GPIB接口默认情况为发送
         public static String InteractivePromptString = Regex.Replace(System.AppDomain.CurrentDomain.FriendlyName, @".exe", "");
         public static bool VISA_CLI_Option_isInteractiveMode = false;  //是否进入交互模式
+        public static UInt16 CounterOfEnterInteractiveMode = 0; //可能存在异常发生后多次进入交互模式的情况,设置该计数器以便后续判断是否打印提示信息
         public static   MessageBasedSession mbSession;
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
