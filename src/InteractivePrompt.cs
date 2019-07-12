@@ -392,11 +392,14 @@ namespace Cintio
 
                 var cmd = string.Concat(input);
                 if (String.IsNullOrWhiteSpace(cmd))
+                {
                     //continue;
+                }
 
                 if (!inputHistory.Contains(input) && !String.IsNullOrWhiteSpace(cmd))
+                    {
                     inputHistory.Add(input);
-
+                    }
                 Console.Write(lambda(cmd, input, completionList));
 
             }
