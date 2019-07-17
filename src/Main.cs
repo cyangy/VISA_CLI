@@ -79,6 +79,7 @@ namespace VISA_CLI
                 { "L|ls|ListAllInstruments", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
                 { "X|dcl|DeviceClear", "Send Device Clear before commands send ", v =>  GlobalVars.VISA_CLI_Option_isDeviceClearSend = v != null },
                 { "I|InteractiveMode", "Interactive Mode ", v =>  GlobalVars.VISA_CLI_Option_isInteractiveMode = v != null },
+                { "t|timeout=", "Timeout milliseconds (Default 1000ms) ", v =>   int.TryParse(v,out GlobalVars.VISASessionTimeout) },
                 { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
@@ -509,6 +510,6 @@ namespace VISA_CLI
         public static   MessageBasedSession mbSession;
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
-        public static int    VISASessionTimeout= 10000; //10000ms
+        public static int    VISASessionTimeout= 1000; //1000ms
     }
 }
