@@ -204,7 +204,6 @@ namespace VISA_CLI
         public static void Read()
         {
             GlobalVars.VISA_CLI_ReadBackBuffer = null;
-            SendDeviceClear();
             // GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadString(GlobalVars.VISA_CLI_Option_ReadBackNbytes);
             GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadByteArray(GlobalVars.VISA_CLI_Option_ReadBackNbytes);
             //https://stackoverflow.com/questions/2530951/remove-first-16-bytes/2530994#2530994
