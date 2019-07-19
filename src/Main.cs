@@ -353,22 +353,29 @@ namespace VISA_CLI
             VISA_CLI.ParseArgs(args);
 
             //根据各参数开始执行命令
-            //首先根据用户需求生成相应的资源名称,如果未指定 -ls参数 且未指定 GPIB / Serial / USB / TCPIP 中的任何一种模式且未指定VISA资源名称,显示错误信息
-            if(!(GlobalVars.VISA_CLI_Option_ListInstruments) && (String.IsNullOrEmpty(GlobalVars.VISAResourceName) && !(GenerateVISAResourceName(GlobalVars.VISA_CLI_Option_CurrentMode)))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
-            {
-                var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
-                Console.SetError(standardError);
-                Console.Error.WriteLine("mode or visa resource name must be specified!");
-                Console.Error.WriteLine("       {0} -h for more information", System.AppDomain.CurrentDomain.FriendlyName);
-                return -1;
-            }                   //-ls                                            GPIB                                                    Serial                                                                                                            USB                                                                                                                                                  TCPIP
-             // 如果未指定ls参数则 GPIB / Serial / USB / TCPIP /visa 必须且只能指定一个,如果多个模式被指定,则最后指定的模式生效
-            if ( !(GlobalVars.VISA_CLI_Option_ListInstruments) && String.IsNullOrEmpty(GlobalVars.VISAResourceName) && ( (GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_VID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_PID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_SerialNumber)) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_TCPIP_IPAddressOrHostName)))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
-            {
-                var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
-                Console.SetError(standardError);
-                Console.Error.WriteLine("GPIB Primary Address or Serial Port Number or USB PID/VID/SN  or  IP address/host name  or VISA resource name must be specified!");
-                return -1;
+            //首先根据用户需求生成相应的资源名称,如果未指定 -ls参数 
+            if(!(GlobalVars.VISA_CLI_Option_ListInstruments))
+            { 
+                //且未指定 GPIB / Serial / USB / TCPIP 中的任何一种模式且未指定VISA资源名称,显示错误信息
+                if ((String.IsNullOrEmpty(GlobalVars.VISAResourceName) && !(GenerateVISAResourceName(GlobalVars.VISA_CLI_Option_CurrentMode)))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
+                {
+                 
+                    var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
+                    Console.SetError(standardError);
+                    Console.Error.WriteLine("mode or visa resource name must be specified!");
+                    Console.Error.WriteLine("       {0} -h for more information", System.AppDomain.CurrentDomain.FriendlyName);
+                    return -1;
+                }
+                //GPIB / Serial / USB / TCPIP / visa 必须指定一个,如果多个模式被指定,则最后指定的模式生效
+                //                                                                                GPIB                                                    Serial                                                                                                            USB                                                                                                                                                  TCPIP
+                else if (String.IsNullOrEmpty(GlobalVars.VISAResourceName) && ((GlobalVars.VISA_CLI_Option_GPIB_PrimaryAddress < 0) && (GlobalVars.VISA_CLI_Option_Serial_PortNumber < 0) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_VID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_PID) || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_USB_SerialNumber)) && (String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_TCPIP_IPAddressOrHostName)))) //https://docs.microsoft.com/en-us/dotnet/api/system.console.error?redirectedfrom=MSDN&view=netframework-4.7.2#System_Console_Error
+                {
+                    var standardError = new StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
+                    Console.SetError(standardError);
+                    Console.Error.WriteLine("GPIB Primary Address or Serial Port Number or USB PID/VID/SN  or  IP address/host name  or VISA resource name must be specified!");
+                    return -1;
+                }
+
             }
             //尝试进行操作
             try
