@@ -74,12 +74,12 @@ namespace VISA_CLI
                 { "D|debug|PrintDebugMessage", "prints debug messages", v =>  GlobalVars.VISA_CLI_Option_PrintDebugMessage  = v != null },
                 { "F|save2file|FileName=", "save the response binary data to specify file", v =>  GlobalVars.VISA_CLI_Option_FileName = v },
                 { "O|overwrite|OverwriteFile", "if file exist ,overwrite it", v =>  GlobalVars.VISA_CLI_Option_OverwriteFile = v != null },
-                { "N|rBytes|ReadBackNbytes=", "how many bytes should be read back", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_ReadBackNbytes ) },
-                { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  int.TryParse(v,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes ) },
+                { "N|rBytes|ReadBackNbytes=", "how many bytes should be read back", v =>  Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISA_CLI_Option_ReadBackNbytes)},
+                { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes)},
                 { "L|ls|ListAllInstruments", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
                 { "X|dcl|DeviceClear", "Send Device Clear before commands send ", v =>  GlobalVars.VISA_CLI_Option_isDeviceClearSend = v != null },
                 { "I|InteractiveMode", "Interactive Mode ", v =>  GlobalVars.VISA_CLI_Option_isInteractiveMode = v != null },
-                { "t|timeout=", "Timeout milliseconds (Default 1000ms) ", v =>   int.TryParse(v,out GlobalVars.VISASessionTimeout) },
+                { "t|timeout=", "Timeout milliseconds (Default 1000ms) ", v =>   Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISASessionTimeout) },
                 { "v|visa|VisaResourceName=", "VISA Resource Name, if this filed specified, Mode and model related parameters should be omitted", v =>  GlobalVars.VISAResourceName = v },
                 { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
@@ -206,13 +206,13 @@ namespace VISA_CLI
         public static void Read()
         {
             GlobalVars.VISA_CLI_ReadBackBuffer = null;
-            // GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadString(GlobalVars.VISA_CLI_Option_ReadBackNbytes);
-            GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadByteArray(GlobalVars.VISA_CLI_Option_ReadBackNbytes);
+            // GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadString(Convert.ToInt32(GlobalVars.VISA_CLI_Option_ReadBackNbytes));
+            GlobalVars.VISA_CLI_ReadBackBuffer = GlobalVars.mbSession.ReadByteArray(Convert.ToInt32(GlobalVars.VISA_CLI_Option_ReadBackNbytes));
             //https://stackoverflow.com/questions/2530951/remove-first-16-bytes/2530994#2530994
             //https://stackoverflow.com/questions/5062233/is-there-a-away-to-convert-ilistarraysegmentbyte-to-byte-without-enumerati
             if (GlobalVars.VISA_CLI_Option_SkipFirstNbytes > 0)
             {
-                ArraySegment<byte> segment = new ArraySegment<byte>(GlobalVars.VISA_CLI_ReadBackBuffer, GlobalVars.VISA_CLI_Option_SkipFirstNbytes, GlobalVars.VISA_CLI_ReadBackBuffer.Length - GlobalVars.VISA_CLI_Option_SkipFirstNbytes);
+                ArraySegment<byte> segment = new ArraySegment<byte>(GlobalVars.VISA_CLI_ReadBackBuffer, Convert.ToInt32(GlobalVars.VISA_CLI_Option_SkipFirstNbytes), GlobalVars.VISA_CLI_ReadBackBuffer.Length - Convert.ToInt32(GlobalVars.VISA_CLI_Option_SkipFirstNbytes));
 #if NET40
                 if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
                  {
@@ -232,10 +232,10 @@ namespace VISA_CLI
         {
             Write();
             Read();
-            //GlobalVars.VISA_CLI_ReadBackBuffer =GlobalVars.mbSession.Query(GlobalVars.VISA_CLI_Option_CommandString,GlobalVars.VISA_CLI_Option_ReadBackNbytes);
+            //GlobalVars.VISA_CLI_ReadBackBuffer =GlobalVars.mbSession.Query(GlobalVars.VISA_CLI_Option_CommandString,Convert.ToInt32(GlobalVars.VISA_CLI_Option_ReadBackNbytes));
             if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
             {
-                Console.WriteLine("{0} byte request And GlobalVars.VISA_CLI_ReadBackBuffer.Length={1} byte actually transfered", GlobalVars.VISA_CLI_Option_ReadBackNbytes, GlobalVars.VISA_CLI_ReadBackBuffer.Length);
+                Console.WriteLine("{0} byte request And GlobalVars.VISA_CLI_ReadBackBuffer.Length={1} byte actually transfered", Convert.ToInt32(GlobalVars.VISA_CLI_Option_ReadBackNbytes), GlobalVars.VISA_CLI_ReadBackBuffer.Length);
             }
         }
         public static void GenerateNewFileName()
@@ -265,8 +265,8 @@ namespace VISA_CLI
             // https://stackoverflow.com/questions/17967509/binarywriter-to-overwrite-an-existing-file-c-sharp/17967581#17967581
             FileStream fs = File.Open(GlobalVars.VISA_CLI_Option_FileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             BinaryWriter bw = new BinaryWriter(fs);
-            //bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(GlobalVars.VISA_CLI_Option_SkipFirstNbytes)),0,GlobalVars.VISA_CLI_ReadBackBuffer.Length); 
-            // bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(GlobalVars.VISA_CLI_Option_SkipFirstNbytes)));
+            //bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(Convert.ToInt32(GlobalVars.VISA_CLI_Option_SkipFirstNbytes))),0,GlobalVars.VISA_CLI_ReadBackBuffer.Length); 
+            // bw.Write(String.Join(String.Empty, GlobalVars.VISA_CLI_ReadBackBuffer.Skip(Convert.ToInt32(GlobalVars.VISA_CLI_Option_SkipFirstNbytes))));
 
 
             bw.Write(GlobalVars.VISA_CLI_ReadBackBuffer);
@@ -404,7 +404,7 @@ namespace VISA_CLI
                     }
                 }
 
-                GlobalVars.mbSession.Timeout = GlobalVars.VISASessionTimeout; //设置超时
+                GlobalVars.mbSession.Timeout = Convert.ToInt32(GlobalVars.VISASessionTimeout); //设置超时
 
                 //执行操作
                 /* 和C版本一样，采用两个函数 OperateOnce 与 Interactive, 在其中细分 
@@ -508,8 +508,8 @@ namespace VISA_CLI
         public static bool VISA_CLI_Option_PrintDebugMessage = false; //debug switch
         public static String VISA_CLI_Option_FileName = null;           //when file name specified, save binary response to file
         public static bool VISA_CLI_Option_OverwriteFile = false;     //if file exist ,overwrite it
-        public static int VISA_CLI_Option_ReadBackNbytes = 1024;      //read specified length of response,default is 1024 bytes
-        public static int VISA_CLI_Option_SkipFirstNbytes = 0;     //for some system(DCA86100,AQ6370,etc.), transfered data via GPIB contain extra bytes,user can skip them
+        public static Decimal VISA_CLI_Option_ReadBackNbytes = 10240;      //read specified length of response,default is 1024 bytes
+        public static Decimal VISA_CLI_Option_SkipFirstNbytes = 0;     //for some system(DCA86100,AQ6370,etc.), transfered data via GPIB contain extra bytes,user can skip them
 
         public static bool VISA_CLI_Option_isDeviceClearSend = false; //是否发送DeviceClear命令,对GPIB接口默认情况为发送
         public static String InteractivePromptString = Regex.Replace(System.AppDomain.CurrentDomain.FriendlyName, @".exe", "");
@@ -518,6 +518,6 @@ namespace VISA_CLI
         public static   MessageBasedSession mbSession;
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
-        public static int    VISASessionTimeout= 1000; //1000ms
+        public static Decimal  VISASessionTimeout= 1000; //1000ms   //https://stackoverflow.com/questions/32184971/tryparse-not-working-when-trying-to-parse-a-decimal-number-to-an-int/32185117#32185117
     }
 }
