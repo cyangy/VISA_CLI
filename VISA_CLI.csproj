@@ -39,6 +39,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -74,6 +75,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\DotNet4_ArraySegment_ToArray_Implement.cs" />
+    <Compile Include="src\HexStringByteArray.cs" />
     <Compile Include="src\InteractivePrompt.cs" />
     <Compile Include="src\Main.cs" />
     <Compile Include="src\Options.cs" />

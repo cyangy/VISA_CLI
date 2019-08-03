@@ -81,6 +81,8 @@ namespace VISA_CLI
                 { "I|InteractiveMode", "Interactive Mode ", v =>  GlobalVars.VISA_CLI_Option_isInteractiveMode = v != null },
                 { "t|timeout=", "Timeout milliseconds (Default 1000ms) ", v =>   Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISASessionTimeout) },
                 { "v|visa|VisaResourceName=", "VISA Resource Name, if this filed specified, Mode and model related parameters should be omitted", v =>  GlobalVars.VISAResourceName = v },
+                { "i|hi|Hi|HexInputMode", "Treat argument of --CommandString as hexadecimal", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
+                { "o|ho|Ho|HexOutputMode", "Format output as hexadecimal string,this function ONLY applied on the standard output, when save to file,data will always be saved as raw binary", v =>  GlobalVars.VISA_CLI_Option_isOutputModeHex = v != null },
                 { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
@@ -200,7 +202,8 @@ namespace VISA_CLI
         public static void  Write()
         {
             SendDeviceClear();
-             GlobalVars.mbSession.Write(Encoding.Default.GetBytes(GlobalVars.VISA_CLI_Option_CommandString)); // use Write(Byte[]) instead of Write(String)
+            Byte[] ba = GlobalVars.VISA_CLI_Option_isInputModeHex ? (DRDigit.Fast.FromHexString(GlobalVars.VISA_CLI_Option_CommandString)): (Encoding.Default.GetBytes(GlobalVars.VISA_CLI_Option_CommandString));
+            GlobalVars.mbSession.Write(ba); // use Write(Byte[]) instead of Write(String)
             //GlobalVars.mbSession.Write(GlobalVars.VISA_CLI_Option_CommandString); // use Write(Byte[]) instead of Write(String)
         }
         public static void Read()
@@ -309,7 +312,7 @@ namespace VISA_CLI
                 {
                     //https://www.cnblogs.com/michaelxu/archive/2007/05/14/745881.html
                     //Console.WriteLine(System.Text.Encoding.ASCII.GetString(GlobalVars.VISA_CLI_ReadBackBuffer));//
-                    Console.Write(System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0'));//
+                    Console.Write((GlobalVars.VISA_CLI_Option_isOutputModeHex) ? (DRDigit.Fast.ToHexString(GlobalVars.VISA_CLI_ReadBackBuffer)+"\n") : (System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0')));//                  
                 }
             }
             return true;
@@ -399,7 +402,7 @@ namespace VISA_CLI
                     SetSerialAttribute(ref GlobalVars.mbSession);  //  设置SERIAL
                     if (SerialTerminationMethod.TerminationCharacter == GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenWrite)  //如果用户指定了要使用写入终止符
                     {
-                        GlobalVars.VISA_CLI_Option_CommandString += System.Text.Encoding.ASCII.GetString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 });//GlobalVars.theWriteTerminationCharactersOfRS232.ToString(); // 更新要发送的命令，末尾加指定的结束符,此处手动添加,系统中终止符只能由  ser.TerminationCharacter 统一设定,为了灵活性,将这一设置让给Read操作，Write操作直接手动在此处在命令末尾加指定的结束符 
+                        GlobalVars.VISA_CLI_Option_CommandString += GlobalVars.VISA_CLI_Option_isInputModeHex ? DRDigit.Fast.ToHexString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }) : (System.Text.Encoding.ASCII.GetString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }));//GlobalVars.theWriteTerminationCharactersOfRS232.ToString(); // 更新要发送的命令，末尾加指定的结束符,此处手动添加,系统中终止符只能由  ser.TerminationCharacter 统一设定,为了灵活性,将这一设置让给Read操作，Write操作直接手动在此处在命令末尾加指定的结束符 
                                                                                                                                                                     //https://stackoverflow.com/questions/22135275/how-to-convert-a-single-byte-to-a-string/22135328#22135328
                     }
                 }
@@ -519,5 +522,7 @@ namespace VISA_CLI
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
         public static Decimal  VISASessionTimeout= 1000; //1000ms   //https://stackoverflow.com/questions/32184971/tryparse-not-working-when-trying-to-parse-a-decimal-number-to-an-int/32185117#32185117
+        public static bool VISA_CLI_Option_isInputModeHex = false;   //是否将输入字符串视为十六进制字符串
+        public static bool VISA_CLI_Option_isOutputModeHex = false;  //将输出格式化为十六进制字符串
     }
 }
