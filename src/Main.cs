@@ -343,7 +343,7 @@ namespace VISA_CLI
                     else
                     {
                         Read();
-                        return "cmdStr is empty,Read(）" + Environment.NewLine + "ReadBack buffer is:" + Environment.NewLine + System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0');
+                        return "cmdStr is empty,Read(）" + Environment.NewLine + "ReadBack buffer is:" + Environment.NewLine + ((GlobalVars.VISA_CLI_Option_isOutputModeHex) ? (DRDigit.Fast.ToHexString(GlobalVars.VISA_CLI_ReadBackBuffer) + "\n") : (System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0')));
                     }
                 }), prompt, startupMsg, completionList);
             return true;
