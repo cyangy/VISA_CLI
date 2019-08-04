@@ -429,7 +429,7 @@ namespace VISA_CLI
                          do{
                               GlobalVars.VISA_CLI_Option_CycleOfLoopModeCounter++;   //必须在 OperateOnce();前增加计数器,如果放到之后,一旦每次都有异常发生,计数器永远不会增加,循环次数显示便无效
                               OperateOnce();
-                               if (GlobalVars.VISA_CLI_Option_CycleOfLoopMode > 1)
+                               if (GlobalVars.VISA_CLI_Option_CycleOfLoopMode > 1 && GlobalVars.VISA_CLI_Option_CycleOfLoopMode > GlobalVars.VISA_CLI_Option_CycleOfLoopModeCounter) //单次模式 或者 循环的最后一次不用延时
                                {
                                 Thread.Sleep(Convert.ToInt32(GlobalVars.VISA_CLI_Option_DelayTimeOfLoopMode_ms));
                                 }
