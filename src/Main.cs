@@ -12,6 +12,7 @@ using Mono.Options;
 using System.Diagnostics;
 using System.Globalization;  //Byte.TryParse()
 using Cintio;
+using System.Threading;
 
 #if NET40
 using DotNet4_ArraySegment_ToArray_Implement;
@@ -84,6 +85,9 @@ namespace VISA_CLI
                 { "i|hi|Hi|HexInputMode", "Treat argument of --CommandString as hexadecimal", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
                 { "o|ho|Ho|HexOutputMode", "Format output as hexadecimal string,this function ONLY applied on the standard output, when save to file,data will always be saved as raw binary", v =>  GlobalVars.VISA_CLI_Option_isOutputModeHex = v != null },
                 { "c|clear|ClearConsole", "clear the console before each operation", v =>  GlobalVars.VISA_CLI_Option_isClearConsole = v != null },
+                { "l|loop|LoopOperate", "Excute in loop mode", v =>  GlobalVars.VISA_CLI_Option_isLoopOperate= v != null },
+                { "delay|DelayTime=", "The delay time(milliseconds) in loop mode(Default 0 ms)", v =>  Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISA_CLI_Option_DelayTimeOfLoopMode_ms)},
+                { "cycle|LoopCycle=", "The cycle of  loop mode", v =>  Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISA_CLI_Option_CycleOfLoopMode)},
                 { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
@@ -418,7 +422,31 @@ namespace VISA_CLI
                      ② 如果配置正确 mode/ index....且 无cmdstr 且 interactive 被指定 进入交互模式
                      ③ 如果配置正确 mode/ index....且 无cmdstr 且 interactive 未指定 询问是否进入交互模式
                 */
-                OperateOnce();  
+                if (!GlobalVars.VISA_CLI_Option_isLoopOperate)
+                {
+                    OperateOnce();
+                }
+                else
+                {
+                    while (true)  //即使异常发生仍旧继续
+                    {
+                        try
+                        {
+                            while (GlobalVars.VISA_CLI_Option_CycleOfLoopMode > GlobalVars.VISA_CLI_Option_CycleOfLoopModeCounter)
+                            {
+                                GlobalVars.VISA_CLI_Option_CycleOfLoopModeCounter++;   //必须在 OperateOnce();前增加计数器,如果放到之后,一旦每次都有异常发生,计数器永远不会增加,循环次数显示便无效
+                                OperateOnce();
+                                Thread.Sleep(Convert.ToInt32(GlobalVars.VISA_CLI_Option_DelayTimeOfLoopMode_ms));
+                            }
+                        }
+                        catch (Exception exp)
+                        {
+                            Console.WriteLine(exp.Message);
+                            continue;
+                        }
+                        break;
+                    }
+                }
                 //进入Interactive模式,可能会有异常发生,例如读取超时异常,一般情况下程序将会退出;本程序设置为即使有异常发生也继续执行 https://forums.asp.net/t/1626951.aspx?How+to+continue+after+exception+occurred+in+C+
                 while (GlobalVars.VISA_CLI_Option_isInteractiveMode)
                     {
@@ -528,5 +556,10 @@ namespace VISA_CLI
         public static bool VISA_CLI_Option_isInputModeHex = false;   //是否将输入字符串视为十六进制字符串
         public static bool VISA_CLI_Option_isOutputModeHex = false;  //将输出格式化为十六进制字符串
         public static bool VISA_CLI_Option_isClearConsole = false;   //每次读写操作前清理控制台
+
+        public static bool VISA_CLI_Option_isLoopOperate = false;   //进入循环操作模式
+        public static Decimal VISA_CLI_Option_DelayTimeOfLoopMode_ms = 0; //进入循环操作模式后每次循环的时间间隔
+        public static Decimal VISA_CLI_Option_CycleOfLoopMode = Int32.MaxValue; //总循环次数
+        public static Int32   VISA_CLI_Option_CycleOfLoopModeCounter = 0; //循环次数计数器
     }
 }
