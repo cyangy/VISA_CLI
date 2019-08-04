@@ -347,6 +347,7 @@ namespace VISA_CLI
                     }
                     else
                     {
+                        GlobalVars.VISA_CLI_Option_CommandString = String.Empty; //如果输入为空，则将GlobalVars.VISA_CLI_Option_CommandString置为空,防止在异常发生后尝试再次进入交互模式时判断出现错误  while (GlobalVars.VISA_CLI_Option_isInteractiveMode || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))
                         Read();
                         return "cmdStr is empty,Read(）" + Environment.NewLine + "ReadBack buffer is:" + Environment.NewLine + ((GlobalVars.VISA_CLI_Option_isOutputModeHex) ? (DRDigit.Fast.ToHexString(GlobalVars.VISA_CLI_ReadBackBuffer) + "\n") : (System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0')));
                     }
@@ -417,9 +418,9 @@ namespace VISA_CLI
 
                 //执行操作
                 /* 和C版本一样，采用两个函数 OperateOnce 与 Interactive, 在其中细分 
-                     ① 如果配置正确 mode/ index....且 cmdstr 且 interactive 被指定, 则先执行相应操作再进入交互模式
-                     ② 如果配置正确 mode/ index....且 无cmdstr 且 interactive 被指定 进入交互模式
-                     ③ 如果配置正确 mode/ index....且 无cmdstr 且 interactive 未指定 询问是否进入交互模式
+                     ① 如果配置正确 mode/ index.... 或 VISA资源名称且   cmdstr 且 interactive 被指定, 则先执行相应操作再进入交互模式
+                     ② 如果配置正确 mode/ index.... 或 VISA资源名称且 无cmdstr 且 interactive 被指定 进入交互模式
+                     ③ 如果配置正确 mode/ index.... 或 VISA资源名称且 无cmdstr 且 interactive 未指定 直接进入交互模式
                 */
                 while (true)  //循环模式下即使异常发生仍旧继续
                  {
@@ -442,7 +443,7 @@ namespace VISA_CLI
                         break;
                  }
                 //进入Interactive模式,可能会有异常发生,例如读取超时异常,一般情况下程序将会退出;本程序设置为即使有异常发生也继续执行 https://forums.asp.net/t/1626951.aspx?How+to+continue+after+exception+occurred+in+C+
-                while (GlobalVars.VISA_CLI_Option_isInteractiveMode)
+                while (GlobalVars.VISA_CLI_Option_isInteractiveMode || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))
                     {
                         try
                         {
