@@ -83,6 +83,7 @@ namespace VISA_CLI
                 { "v|visa|VisaResourceName=", "VISA Resource Name, if this filed specified, Mode and model related parameters should be omitted", v =>  GlobalVars.VISAResourceName = v },
                 { "i|hi|Hi|HexInputMode", "Treat argument of --CommandString as hexadecimal", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
                 { "o|ho|Ho|HexOutputMode", "Format output as hexadecimal string,this function ONLY applied on the standard output, when save to file,data will always be saved as raw binary", v =>  GlobalVars.VISA_CLI_Option_isOutputModeHex = v != null },
+                { "c|clear|ClearConsole", "clear the console before each operation", v =>  GlobalVars.VISA_CLI_Option_isClearConsole = v != null },
                 { "h|?|help",  "show this message and exit.", v => showHelp = v != null },
             };
 
@@ -331,6 +332,7 @@ namespace VISA_CLI
             InteractivePrompt.Run(
                 ((strCmd, promptt, listCmd) =>
                 {
+                    if (GlobalVars.VISA_CLI_Option_isClearConsole) { Console.Clear(); }
                     //return strCmd.Length.ToString() + Environment.NewLine;
                     //var handleInput = "(((--> " + strCmd + " <--)))";
                     //return handleInput + Environment.NewLine;
@@ -383,6 +385,7 @@ namespace VISA_CLI
             //尝试进行操作
             try
             {
+                if (GlobalVars.VISA_CLI_Option_isClearConsole) { Console.Clear(); }
                 if (GlobalVars.VISA_CLI_Option_ListInstruments) { ListAll_TMC_Devices(); } //list all device then exit
 
                 // GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
@@ -524,5 +527,6 @@ namespace VISA_CLI
         public static Decimal  VISASessionTimeout= 1000; //1000ms   //https://stackoverflow.com/questions/32184971/tryparse-not-working-when-trying-to-parse-a-decimal-number-to-an-int/32185117#32185117
         public static bool VISA_CLI_Option_isInputModeHex = false;   //是否将输入字符串视为十六进制字符串
         public static bool VISA_CLI_Option_isOutputModeHex = false;  //将输出格式化为十六进制字符串
+        public static bool VISA_CLI_Option_isClearConsole = false;   //每次读写操作前清理控制台
     }
 }
