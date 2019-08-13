@@ -80,7 +80,7 @@ namespace VISA_CLI
                 { "L|ls|ListAllInstruments", "List All Instruments on interface", v =>  GlobalVars.VISA_CLI_Option_ListInstruments = v != null },
                 { "X|dcl|DeviceClear", "Send Device Clear before commands send ", v =>  GlobalVars.VISA_CLI_Option_isDeviceClearSend = v != null },
                 { "I|InteractiveMode", "Interactive Mode ", v =>  GlobalVars.VISA_CLI_Option_isInteractiveMode = v != null },
-                { "t|timeout=", "Timeout milliseconds (Default 1000ms) ", v =>   Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISASessionTimeout) },
+                { "t|timeout=", "Timeout milliseconds (Default 10000ms) ", v =>   Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISASessionTimeout) },
                 { "v|visa|VisaResourceName=", "VISA Resource Name, if this filed specified, Mode and model related parameters should be omitted", v =>  GlobalVars.VISAResourceName = v },
                 { "i|hi|Hi|HexInputMode", "Treat argument of --CommandString as hexadecimal", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
                 { "o|ho|Ho|HexOutputMode", "Format output as hexadecimal string,this function ONLY applied on the standard output, when save to file,data will always be saved as raw binary", v =>  GlobalVars.VISA_CLI_Option_isOutputModeHex = v != null },
@@ -547,7 +547,7 @@ namespace VISA_CLI
         public static   MessageBasedSession mbSession;
         public static   UsbRaw      USBRAW_Session;      //USB
         public static String VISAResourceName = null;
-        public static Decimal  VISASessionTimeout= 1000; //1000ms   //https://stackoverflow.com/questions/32184971/tryparse-not-working-when-trying-to-parse-a-decimal-number-to-an-int/32185117#32185117
+        public static Decimal  VISASessionTimeout= 10000; //10000ms   //https://stackoverflow.com/questions/32184971/tryparse-not-working-when-trying-to-parse-a-decimal-number-to-an-int/32185117#32185117
         public static bool VISA_CLI_Option_isInputModeHex = false;   //是否将输入字符串视为十六进制字符串
         public static bool VISA_CLI_Option_isOutputModeHex = false;  //将输出格式化为十六进制字符串
         public static bool VISA_CLI_Option_isClearConsole = false;   //每次读写操作前清理控制台
