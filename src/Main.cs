@@ -82,7 +82,8 @@ namespace VISA_CLI
                 { "I|InteractiveMode", "Interactive Mode ", v =>  GlobalVars.VISA_CLI_Option_isInteractiveMode = v != null },
                 { "t|timeout=", "Timeout milliseconds (Default 10000ms) ", v =>   Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISASessionTimeout) },
                 { "v|visa|VisaResourceName=", "VISA Resource Name, if this filed specified, Mode and model related parameters should be omitted", v =>  GlobalVars.VISAResourceName = v },
-                { "i|hi|Hi|HexInputMode", "Treat argument of --CommandString as hexadecimal", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
+                { "m|mix|MixMode", "Support Mix string input, For example  string  '0x39\\37\\x398' will be prase as string '9798' , the priority of this switch is the highest, if both --MixMode  and --HexInputMode specified, string  '0x39\\37\\x398' will be prase as string '9798' at first ,then it will be treat as hex string and prase as string 'ab' finally", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
+                { "i|hi|Hi|HexInputMode", "Treat argument of --CommandString as hexadecimal, please  see option --MixMode for detail", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
                 { "o|ho|Ho|HexOutputMode", "Format output as hexadecimal string,this function ONLY applied on the standard output, when save to file,data will always be saved as raw binary", v =>  GlobalVars.VISA_CLI_Option_isOutputModeHex = v != null },
                 { "c|clear|ClearConsole", "clear the console before each operation", v =>  GlobalVars.VISA_CLI_Option_isClearConsole = v != null },
                 { "l|cycle|LoopCycle=", "The cycle of  loop mode （Default : 1 cycle ,operate once）", v =>  Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISA_CLI_Option_CycleOfLoopMode)},
@@ -206,6 +207,10 @@ namespace VISA_CLI
         public static void  Write()
         {
             SendDeviceClear();
+            if (GlobalVars.VISA_CLI_Option_isMixMode)  // High Priority of mix mode ,then hex mode
+            {
+                ProcessMixedHex();
+            }
             Byte[] ba = GlobalVars.VISA_CLI_Option_isInputModeHex ? (DRDigit.Fast.FromHexString(GlobalVars.VISA_CLI_Option_CommandString)): (Encoding.Default.GetBytes(GlobalVars.VISA_CLI_Option_CommandString));
             GlobalVars.mbSession.Write(ba); // use Write(Byte[]) instead of Write(String)
             //GlobalVars.mbSession.Write(GlobalVars.VISA_CLI_Option_CommandString); // use Write(Byte[]) instead of Write(String)
@@ -286,7 +291,31 @@ namespace VISA_CLI
             }
             return true;
         }
+		//https://stackoverflow.com/questions/3448116/convert-ascii-hex-codes-to-character-in-mixed-string/3448349#3448349
+        public static bool ProcessMixedHex()
+        {
+            Regex regex = new Regex(@"\\x[0-9,a-f,A-F]{2}");
+            var matches = regex.Matches(GlobalVars.VISA_CLI_Option_CommandString);
+            foreach (Match match in matches)
+            {
+                GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(match.Value.Replace(@"\x", ""), 16)).ToString());
+            }
 
+            regex = new Regex(@"\\[0-9,a-f,A-F]{2}");
+            matches = regex.Matches(GlobalVars.VISA_CLI_Option_CommandString);
+            foreach (Match match in matches)
+            {
+                GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(match.Value.Replace(@"\", ""), 16)).ToString());
+            }
+            regex = new Regex(@"0x[0-9,a-f,A-F]{2}");
+            matches = regex.Matches(GlobalVars.VISA_CLI_Option_CommandString);
+            foreach (Match match in matches)
+            {
+                GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(match.Value.Replace(@"0x", ""), 16)).ToString());
+            }
+
+            return true;
+        }
         public static bool OperateOnce()
         {
             if (GlobalVars.VISA_CLI_Option_isQueryCommand && !String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))  // query
@@ -555,5 +584,7 @@ namespace VISA_CLI
         public static Decimal VISA_CLI_Option_DelayTimeOfLoopMode_ms = 0; //进入循环操作模式后每次循环的时间间隔
         public static Decimal VISA_CLI_Option_CycleOfLoopMode = 1; //总循环次数
         public static Int32   VISA_CLI_Option_CycleOfLoopModeCounter = 0; //循环次数计数器
+
+        public static bool VISA_CLI_Option_isMixMode = false;   //混合格式输入0x39\37\x398 等效于 字符串 9798
     }
 }
