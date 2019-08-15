@@ -295,19 +295,13 @@ namespace VISA_CLI
 		//https://stackoverflow.com/questions/3448116/convert-ascii-hex-codes-to-character-in-mixed-string/3448349#3448349
         public static bool ProcessMixedHex()
         {
-            Regex regex = new Regex(@"\\x[0-9,a-f,A-F]{2}");
+            Regex regex = new Regex(@"\\(x)?[0-9,a-f,A-F]{2}");
             var matches = regex.Matches(GlobalVars.VISA_CLI_Option_CommandString);
             foreach (Match match in matches)
             {
-                GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(match.Value.Replace(@"\x", ""), 16)).ToString());
-            }
+                GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(Regex.Replace(match.Value, @"\\(x)?", ""), 16)).ToString()); //https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex.replace?view=netframework-4.8
+            }         
 
-            regex = new Regex(@"\\[0-9,a-f,A-F]{2}");
-            matches = regex.Matches(GlobalVars.VISA_CLI_Option_CommandString);
-            foreach (Match match in matches)
-            {
-                GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(match.Value.Replace(@"\", ""), 16)).ToString());
-            }
             regex = new Regex(@"0x[0-9,a-f,A-F]{2}");
             matches = regex.Matches(GlobalVars.VISA_CLI_Option_CommandString);
             foreach (Match match in matches)
