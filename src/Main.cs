@@ -283,7 +283,8 @@ namespace VISA_CLI
 
             bw.Write(GlobalVars.VISA_CLI_ReadBackBuffer);
             bw.Close(); //Close
-            fs.Close(); //Close
+            //fs.Close(); //Close      警告 CA2202  可以在方法 'VISA_CLI.SaveResponseToFile()' 中多次释放对象 'fs'。若要避免生成 System.ObjectDisposedException，不应对一个对象多次调用 Dispose。: Lines: 282   VISA_CLI D:\Data\Github\VISA_CLI1\src\Main.cs    282 活动的
+
             if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
             {
                 FileInfo fi = new FileInfo(GlobalVars.VISA_CLI_Option_FileName);
