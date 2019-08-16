@@ -73,7 +73,7 @@ namespace VISA_CLI
                 { "R|read|JustReadBack", "just read back", v =>  GlobalVars.VISA_CLI_Option_JustReadBack = v != null },
                 { "Q|query|QueryCommand", "the command is a query command", v =>  GlobalVars.VISA_CLI_Option_isQueryCommand = v != null },
                 { "D|debug|PrintDebugMessage", "prints debug messages", v =>  GlobalVars.VISA_CLI_Option_PrintDebugMessage  = v != null },
-                { "F|save2file|FileName=", "save the response binary data to specify file", v =>  GlobalVars.VISA_CLI_Option_FileName = v },
+                { "F|save2file|FileName=", "save the response binary data to specify file", v =>  GlobalVars.VISA_CLI_Option_FileNameOriginal = v },
                 { "O|overwrite|OverwriteFile", "if file exist ,overwrite it", v =>  GlobalVars.VISA_CLI_Option_OverwriteFile = v != null },
                 { "N|rBytes|ReadBackNbytes=", "how many bytes should be read back", v =>  Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISA_CLI_Option_ReadBackNbytes)},
                 { "E|skip|SkipFirstNbytes=", "skip first n bytes of received data", v =>  Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISA_CLI_Option_SkipFirstNbytes)},
@@ -258,7 +258,7 @@ namespace VISA_CLI
             }
             //https://docs.microsoft.com/en-us/dotnet/api/system.io.path.getextension?view=netframework-4.7.2
             //https://docs.microsoft.com/en-us/dotnet/api/system.io.path.getfilenamewithoutextension?view=netframework-4.7.2
-            GlobalVars.VISA_CLI_Option_FileName = Path.GetFileNameWithoutExtension(GlobalVars.VISA_CLI_Option_FileName)+"_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + Path.GetExtension(GlobalVars.VISA_CLI_Option_FileName);
+            GlobalVars.VISA_CLI_Option_FileName = Path.GetFileNameWithoutExtension(GlobalVars.VISA_CLI_Option_FileNameOriginal)+"_" + DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss") + Path.GetExtension(GlobalVars.VISA_CLI_Option_FileNameOriginal);
             if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
             {
                 Console.WriteLine("new file name is :{0}", GlobalVars.VISA_CLI_Option_FileName);
@@ -376,6 +376,7 @@ namespace VISA_CLI
             Stopwatch sw = Stopwatch.StartNew();
             //尝试解析各参数
             VISA_CLI.ParseArgs(args);
+            GlobalVars.VISA_CLI_Option_FileName = GlobalVars.VISA_CLI_Option_FileNameOriginal;
 
             //根据各参数开始执行命令
             //首先根据用户需求生成相应的资源名称,如果未指定 -ls参数 
@@ -444,6 +445,11 @@ namespace VISA_CLI
                         {
                          do{
                               GlobalVars.VISA_CLI_Option_CycleOfLoopModeCounter++;   //必须在 OperateOnce();前增加计数器,如果放到之后,一旦每次都有异常发生,计数器永远不会增加,循环次数显示便无效
+                              if (!String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_FileName) && GlobalVars.VISA_CLI_Option_CycleOfLoopMode > 1) // 如果要在循环模式(循环次数大于1)中保存文件,则文件名自动添加编号filename_0001.ext
+                              {
+                                //https://stackoverflow.com/questions/4325267/c-sharp-convert-int-to-string-with-padding-zeros/54807721#54807721
+                                GlobalVars.VISA_CLI_Option_FileName = Path.GetFileNameWithoutExtension(GlobalVars.VISA_CLI_Option_FileNameOriginal) + "_" + GlobalVars.VISA_CLI_Option_CycleOfLoopModeCounter.ToString("0###") + Path.GetExtension(GlobalVars.VISA_CLI_Option_FileNameOriginal);
+                               }
                               OperateOnce();
                                if (GlobalVars.VISA_CLI_Option_CycleOfLoopMode > 1 && GlobalVars.VISA_CLI_Option_CycleOfLoopMode > GlobalVars.VISA_CLI_Option_CycleOfLoopModeCounter) //单次模式 或者 循环的最后一次不用延时
                                {
@@ -552,6 +558,7 @@ namespace VISA_CLI
         public static bool VISA_CLI_Option_isQueryCommand = false;         // is a query command
         public static bool VISA_CLI_Option_PrintDebugMessage = false; //debug switch
         public static String VISA_CLI_Option_FileName = null;           //when file name specified, save binary response to file
+        public static String VISA_CLI_Option_FileNameOriginal = null;   //保存从命令行传入的文件名不变
         public static bool VISA_CLI_Option_OverwriteFile = false;     //if file exist ,overwrite it
         public static Decimal VISA_CLI_Option_ReadBackNbytes = 10240;      //read specified length of response,default is 1024 bytes
         public static Decimal VISA_CLI_Option_SkipFirstNbytes = 0;     //for some system(DCA86100,AQ6370,etc.), transfered data via GPIB contain extra bytes,user can skip them
