@@ -347,7 +347,7 @@ namespace VISA_CLI
             {
                 startupMsg = String.Empty;
             }
-            List<string> completionList = new List<string> { "test", "contractearnings", "cancels", "cancellationInfo", "cantankerous" };
+            List<string> completionList = new List<string> { "*IDN?", "*RST", "*TST?", "*CLS" };
             InteractivePrompt.Run(
                 ((strCmd, promptt, listCmd) =>
                 {
