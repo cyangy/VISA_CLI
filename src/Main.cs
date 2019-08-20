@@ -97,9 +97,12 @@ namespace VISA_CLI
             }
             catch (OptionException e)
             {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.Write("{0}: ",System.Diagnostics.Process.GetCurrentProcess().ProcessName);
                 Console.WriteLine(e.Message);
                 Console.WriteLine("Try `{0} --help' for more information.", System.AppDomain.CurrentDomain.FriendlyName);
+                Console.ResetColor();
             }
 
             if (showHelp)
@@ -458,7 +461,10 @@ namespace VISA_CLI
                         catch (Exception exp)
                         {
                             GlobalVars.mbSession.Dispose();//及时释放资源
+                            Console.BackgroundColor = ConsoleColor.DarkRed;
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine(exp.Message);
+                            Console.ResetColor();
                         }
                 //进入Interactive模式,可能会有异常发生,例如读取超时异常,一般情况下程序将会退出;本程序设置为即使有异常发生也继续执行 https://forums.asp.net/t/1626951.aspx?How+to+continue+after+exception+occurred+in+C+
                 while (GlobalVars.VISA_CLI_Option_isInteractiveMode || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))
@@ -469,6 +475,8 @@ namespace VISA_CLI
                         }
                         catch (Exception exp)
                         {
+                            Console.BackgroundColor = ConsoleColor.Black;
+                            Console.ForegroundColor = ConsoleColor.DarkRed;
                             Console.WriteLine(exp.Message);
                             continue;
                         }
@@ -488,6 +496,7 @@ namespace VISA_CLI
             finally //不论是否有异常以下代码都会被执行
             {
                 GlobalVars.mbSession.Dispose(); //最后释放资源
+                Console.ResetColor();
             }
             
             sw.Stop();
