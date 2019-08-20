@@ -478,6 +478,7 @@ namespace VISA_CLI
                             Console.BackgroundColor = ConsoleColor.Black;
                             Console.ForegroundColor = ConsoleColor.DarkRed;
                             Console.WriteLine(exp.Message);
+                            Console.ResetColor();
                             continue;
                         }
                     }            
@@ -485,18 +486,23 @@ namespace VISA_CLI
             }
             catch (InvalidCastException) //打开了不支持的设备
             {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine("会话必须是基于消息的会话, 请选择正确的设备\n Resource selected must be a message - based session!");
+                Console.ResetColor();
                 return -1;
             }
             catch (Exception exp)//其他异常
             {
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine(exp.Message);
+                Console.ResetColor();
                 return -1;
             }
             finally //不论是否有异常以下代码都会被执行
             {
                 GlobalVars.mbSession.Dispose(); //最后释放资源
-                Console.ResetColor();
             }
             
             sw.Stop();
