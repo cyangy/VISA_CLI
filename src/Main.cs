@@ -460,7 +460,7 @@ namespace VISA_CLI
                         }
                         catch (Exception exp)
                         {
-                            GlobalVars.mbSession.Dispose();//及时释放资源
+                            if (!GlobalVars.VISA_CLI_Option_isInteractiveMode) { GlobalVars.mbSession.Dispose(); }//如果要进入交互模式，先不释放资源
                             Console.BackgroundColor = ConsoleColor.DarkRed;
                             Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine(exp.Message);
