@@ -439,8 +439,6 @@ namespace VISA_CLI
                      ② 如果配置正确 mode/ index.... 或 VISA资源名称且 无cmdstr 且 interactive 被指定 进入交互模式
                      ③ 如果配置正确 mode/ index.... 或 VISA资源名称且 无cmdstr 且 interactive 未指定 直接进入交互模式
                 */
-                while (true)  //循环模式下即使异常发生仍旧继续
-                 {
                         try
                         {
                          do{
@@ -459,11 +457,9 @@ namespace VISA_CLI
                         }
                         catch (Exception exp)
                         {
+                            GlobalVars.mbSession.Dispose();//及时释放资源
                             Console.WriteLine(exp.Message);
-                            continue;
                         }
-                        break;
-                 }
                 //进入Interactive模式,可能会有异常发生,例如读取超时异常,一般情况下程序将会退出;本程序设置为即使有异常发生也继续执行 https://forums.asp.net/t/1626951.aspx?How+to+continue+after+exception+occurred+in+C+
                 while (GlobalVars.VISA_CLI_Option_isInteractiveMode || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))
                     {
@@ -491,7 +487,7 @@ namespace VISA_CLI
             }
             finally //不论是否有异常以下代码都会被执行
             {
-
+                GlobalVars.mbSession.Dispose(); //最后释放资源
             }
             
             sw.Stop();
