@@ -97,12 +97,7 @@ namespace VISA_CLI
             }
             catch (OptionException e)
             {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write("{0}: ",System.Diagnostics.Process.GetCurrentProcess().ProcessName);
-                Console.WriteLine(e.Message);
-                Console.WriteLine("Try `{0} --help' for more information.", System.AppDomain.CurrentDomain.FriendlyName);
-                Console.ResetColor();
+                WriteExceptionMessageToConsole(System.Diagnostics.Process.GetCurrentProcess().ProcessName + e.Message + "\n" + "Try '" + System.AppDomain.CurrentDomain.FriendlyName + "--help' for more information.");
             }
 
             if (showHelp)
@@ -373,6 +368,14 @@ namespace VISA_CLI
                 }), prompt, startupMsg, completionList);
             return true;
         }
+        public static bool WriteExceptionMessageToConsole(String msg, ConsoleColor bc=ConsoleColor.Black, ConsoleColor fc = ConsoleColor.DarkRed)
+        {
+            Console.BackgroundColor = bc;
+            Console.ForegroundColor = fc;
+            Console.WriteLine(msg);
+            Console.ResetColor();
+            return true;
+        }
         static Int32 Main(string[] args)
         {
             
@@ -461,10 +464,7 @@ namespace VISA_CLI
                         catch (Exception exp)
                         {
                             if (!GlobalVars.VISA_CLI_Option_isInteractiveMode) { GlobalVars.mbSession.Dispose(); }//如果要进入交互模式，先不释放资源
-                            Console.BackgroundColor = ConsoleColor.DarkRed;
-                            Console.ForegroundColor = ConsoleColor.White;
-                            Console.WriteLine(exp.Message);
-                            Console.ResetColor();
+                            WriteExceptionMessageToConsole(exp.Message);
                         }
                 //进入Interactive模式,可能会有异常发生,例如读取超时异常,一般情况下程序将会退出;本程序设置为即使有异常发生也继续执行 https://forums.asp.net/t/1626951.aspx?How+to+continue+after+exception+occurred+in+C+
                 while (GlobalVars.VISA_CLI_Option_isInteractiveMode || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))
@@ -475,10 +475,7 @@ namespace VISA_CLI
                         }
                         catch (Exception exp)
                         {
-                            Console.BackgroundColor = ConsoleColor.Black;
-                            Console.ForegroundColor = ConsoleColor.DarkRed;
-                            Console.WriteLine(exp.Message);
-                            Console.ResetColor();
+                            WriteExceptionMessageToConsole(exp.Message);
                             continue;
                         }
                     }            
@@ -486,18 +483,12 @@ namespace VISA_CLI
             }
             catch (InvalidCastException) //打开了不支持的设备
             {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine("会话必须是基于消息的会话, 请选择正确的设备\n Resource selected must be a message - based session!");
-                Console.ResetColor();
+                WriteExceptionMessageToConsole("会话必须是基于消息的会话, 请选择正确的设备\n Resource selected must be a message - based session!");
                 return -1;
             }
             catch (Exception exp)//其他异常
             {
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.DarkRed;
-                Console.WriteLine(exp.Message);
-                Console.ResetColor();
+                WriteExceptionMessageToConsole(exp.Message);
                 return -1;
             }
             finally //不论是否有异常以下代码都会被执行
