@@ -493,7 +493,7 @@ namespace VISA_CLI
             }
             finally //不论是否有异常以下代码都会被执行
             {
-                GlobalVars.mbSession.Dispose(); //最后释放资源
+                //GlobalVars.mbSession.Dispose(); //最后释放资源
             }
             
             sw.Stop();
