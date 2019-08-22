@@ -82,7 +82,7 @@ namespace VISA_CLI
                 { "I|InteractiveMode", "Interactive Mode ", v =>  GlobalVars.VISA_CLI_Option_isInteractiveMode = v != null },
                 { "t|timeout=", "Timeout milliseconds (Default 10000ms) ", v =>   Decimal.TryParse(v,NumberStyles.Any,/*CultureInfo.CurrentCulture*/null,out GlobalVars.VISASessionTimeout) },
                 { "v|visa|VisaResourceName=", "VISA Resource Name, if this filed specified, Mode and model related parameters should be omitted", v =>  GlobalVars.VISAResourceName = v },
-                { "m|mix|MixMode", "Support Mix string input, For example  string  '0x39\\37\\x398' will be prase as string '9798' , the priority of this switch is the highest, if both --MixMode  and --HexInputMode specified, string  '0x39\\37\\x398' will be prase as string '9798' at first ,then it will be treat as hex string and prase as string 'ab' finally", v =>  GlobalVars.VISA_CLI_Option_isMixMode  = v != null },
+                { "m|mix|MixMode", "Support Mix string input, For example  string  '0x39\\37\\x398' will be prase as string '9798'.\n \\r \\n \\t... also will be treat as  Carriage Return / Line Feed / Tab ... \nThe priority of this switch is the highest, if both --MixMode  and --HexInputMode specified, string  '0x39\\37\\x398' will be prase as string '9798' at first ,then it will be treat as hex string and prase as string 'ab' finally", v =>  GlobalVars.VISA_CLI_Option_isMixMode  = v != null },
                 { "i|hi|Hi|HexInputMode", "Treat argument of --CommandString as hexadecimal, please  see option --MixMode for detail", v =>  GlobalVars.VISA_CLI_Option_isInputModeHex  = v != null },
                 { "o|ho|Ho|HexOutputMode", "Format output as hexadecimal string,this function ONLY applied on the standard output, when save to file,data will always be saved as raw binary", v =>  GlobalVars.VISA_CLI_Option_isOutputModeHex = v != null },
                 { "c|clear|ClearConsole", "clear the console before each operation", v =>  GlobalVars.VISA_CLI_Option_isClearConsole = v != null },
@@ -298,7 +298,17 @@ namespace VISA_CLI
             foreach (Match match in matches)
             {
                 GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(Regex.Replace(match.Value, @"(\\x|0x|\\)", ""), 16)).ToString()); //https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex.replace?view=netframework-4.8
-            }         
+            }
+            //处理 \0 \a \b \f \n \r \t \v
+            GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(@"\0", "\0")
+                                                                                               .Replace(@"\a", "\a")
+                                                                                               .Replace(@"\b", "\b")
+                                                                                               .Replace(@"\f", "\f")
+                                                                                               .Replace(@"\n", "\n")
+                                                                                               .Replace(@"\r", "\r")
+                                                                                               .Replace(@"\t", "\t")
+                                                                                               .Replace(@"\v", "\v"); //https://social.msdn.microsoft.com/Forums/vstudio/en-US/3d43d318-4de5-4ead-b0b8-541f98fea9c4/multiline-statement?forum=csharpgeneral
+                                                                                                                      //https://devblogs.microsoft.com/csharpfaq/what-character-escape-sequences-are-available/
             return true;
         }
         public static bool OperateOnce()
