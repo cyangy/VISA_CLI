@@ -209,7 +209,8 @@ namespace VISA_CLI
             {
                 ProcessMixedHex();
             }
-            Byte[] ba = GlobalVars.VISA_CLI_Option_isInputModeHex ? (DRDigit.Fast.FromHexString(GlobalVars.VISA_CLI_Option_CommandString)): (Encoding.Default.GetBytes(GlobalVars.VISA_CLI_Option_CommandString));
+            // byte[]转String出现乱码（EFBFBD或3F） https://blog.csdn.net/u010898743/article/details/79447074  https://stackoverflow.com/questions/629617/how-to-convert-string-to-iso-8859-1/629629#629629
+            Byte[] ba = GlobalVars.VISA_CLI_Option_isInputModeHex ? (DRDigit.Fast.FromHexString(GlobalVars.VISA_CLI_Option_CommandString)): (System.Text.Encoding.GetEncoding("iso-8859-1").GetBytes(GlobalVars.VISA_CLI_Option_CommandString));
             GlobalVars.mbSession.Write(ba); // use Write(Byte[]) instead of Write(String)
             //GlobalVars.mbSession.Write(GlobalVars.VISA_CLI_Option_CommandString); // use Write(Byte[]) instead of Write(String)
         }
@@ -295,9 +296,15 @@ namespace VISA_CLI
         {
             Regex regex = new Regex(@"(\\x|0x|\\)[0-9,a-f,A-F]{2}"); // https://www.regextester.com/93690   (\\x|0x|\\)[0-9,a-f,A-F]{2}  0x39\37\x398  https://medium.com/factory-mind/regex-tutorial-a-simple-cheatsheet-by-examples-649dc1c3f285
             var matches = regex.Matches(GlobalVars.VISA_CLI_Option_CommandString);
+            //注释掉的地方也是工作正常的
+            //byte[] byte_tmp;
+            //String str_tmp;
             foreach (Match match in matches)
             {
                 GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, ((char)Convert.ToByte(Regex.Replace(match.Value, @"(\\x|0x|\\)", ""), 16)).ToString()); //https://docs.microsoft.com/en-us/dotnet/api/system.text.regularexpressions.regex.replace?view=netframework-4.8
+               //str_tmp = Regex.Replace(match.Value, @"(\\x|0x|\\)", "");
+               //byte_tmp = DRDigit.Fast.FromHexString(str_tmp);
+               //GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(match.Value, System.Text.Encoding.GetEncoding("iso-8859-1").GetString(new byte[] { Convert.ToByte(str_tmp, 16) }));
             }
             //处理 \0 \a \b \f \n \r \t \v
             GlobalVars.VISA_CLI_Option_CommandString = GlobalVars.VISA_CLI_Option_CommandString.Replace(@"\0", "\0")
@@ -340,7 +347,7 @@ namespace VISA_CLI
                 {
                     //https://www.cnblogs.com/michaelxu/archive/2007/05/14/745881.html
                     //Console.WriteLine(System.Text.Encoding.ASCII.GetString(GlobalVars.VISA_CLI_ReadBackBuffer));//
-                    Console.Write((GlobalVars.VISA_CLI_Option_isOutputModeHex) ? (DRDigit.Fast.ToHexString(GlobalVars.VISA_CLI_ReadBackBuffer)+"\n") : (System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0')));//                  
+                    Console.Write((GlobalVars.VISA_CLI_Option_isOutputModeHex) ? (DRDigit.Fast.ToHexString(GlobalVars.VISA_CLI_ReadBackBuffer)+"\n") : (System.Text.Encoding.GetEncoding("iso-8859-1").GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0')));//                  
                 }
             }
             return true;
@@ -373,7 +380,7 @@ namespace VISA_CLI
                     {
                         GlobalVars.VISA_CLI_Option_CommandString = String.Empty; //如果输入为空，则将GlobalVars.VISA_CLI_Option_CommandString置为空,防止在异常发生后尝试再次进入交互模式时判断出现错误  while (GlobalVars.VISA_CLI_Option_isInteractiveMode || String.IsNullOrEmpty(GlobalVars.VISA_CLI_Option_CommandString))
                         Read();
-                        return "cmdStr is empty,Read(）" + Environment.NewLine + "ReadBack buffer is:" + Environment.NewLine + ((GlobalVars.VISA_CLI_Option_isOutputModeHex) ? (DRDigit.Fast.ToHexString(GlobalVars.VISA_CLI_ReadBackBuffer) + "\n") : (System.Text.Encoding.Default.GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0')));
+                        return "cmdStr is empty,Read(）" + Environment.NewLine + "ReadBack buffer is:" + Environment.NewLine + ((GlobalVars.VISA_CLI_Option_isOutputModeHex) ? (DRDigit.Fast.ToHexString(GlobalVars.VISA_CLI_ReadBackBuffer) + "\n") : (System.Text.Encoding.GetEncoding("iso-8859-1").GetString(GlobalVars.VISA_CLI_ReadBackBuffer).TrimEnd('\0')));
                     }
                 }), prompt, startupMsg, completionList);
             return true;
@@ -442,7 +449,7 @@ namespace VISA_CLI
                     SetSerialAttribute(ref GlobalVars.mbSession);  //  设置SERIAL
                     if (SerialTerminationMethod.TerminationCharacter == GlobalVars.VISA_CLI_Option_SerialTerminationMethodWhenWrite)  //如果用户指定了要使用写入终止符
                     {
-                        GlobalVars.VISA_CLI_Option_CommandString += GlobalVars.VISA_CLI_Option_isInputModeHex ? DRDigit.Fast.ToHexString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }) : (System.Text.Encoding.ASCII.GetString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }));//GlobalVars.theWriteTerminationCharactersOfRS232.ToString(); // 更新要发送的命令，末尾加指定的结束符,此处手动添加,系统中终止符只能由  ser.TerminationCharacter 统一设定,为了灵活性,将这一设置让给Read操作，Write操作直接手动在此处在命令末尾加指定的结束符 
+                        GlobalVars.VISA_CLI_Option_CommandString += GlobalVars.VISA_CLI_Option_isInputModeHex ? DRDigit.Fast.ToHexString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }) : (System.Text.Encoding.GetEncoding("iso-8859-1").GetString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }));//GlobalVars.theWriteTerminationCharactersOfRS232.ToString(); // 更新要发送的命令，末尾加指定的结束符,此处手动添加,系统中终止符只能由  ser.TerminationCharacter 统一设定,为了灵活性,将这一设置让给Read操作，Write操作直接手动在此处在命令末尾加指定的结束符 
                                                                                                                                                                     //https://stackoverflow.com/questions/22135275/how-to-convert-a-single-byte-to-a-string/22135328#22135328
                     }
                 }
