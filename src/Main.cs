@@ -59,6 +59,7 @@ namespace VISA_CLI
                 { "vid|usbVID=", "USB Vendor ID", v =>  GlobalVars.VISA_CLI_Option_USB_VID = v},
                 { "pid|usbPID=", "USB Model ID", v => GlobalVars.VISA_CLI_Option_USB_PID = v},
                 { "sn|usbSerialNumber=", "USB Serial Number", v => GlobalVars.VISA_CLI_Option_USB_SerialNumber = v},
+                { "raw|USBRAW", "USB Raw Mode", v =>  GlobalVars.VISA_CLI_Option_USB_Raw = v != null },
                 
                 //TCPIP  TCPIP0::192.168.1.2::inst0::INSTR
                 { "T|useTCPIP", "TCPIP mode", v => GlobalVars.VISA_CLI_Option_CurrentMode = (short)Mode.TCPIP},
@@ -135,6 +136,16 @@ namespace VISA_CLI
                                                        + "::INSTR";
                         return true;
                     }
+                case ((short)Mode.USBRAW):
+                    {
+                        GlobalVars.VISAResourceName = String.Empty; // 清空原字符串
+                        GlobalVars.VISAResourceName = "USB" + GlobalVars.VISA_CLI_Option_USB_BoardIndex.ToString()
+                                                       + "::0x" + Regex.Replace(GlobalVars.VISA_CLI_Option_USB_VID, @"0[x,X]", "")
+                                                       + "::0x" + Regex.Replace(GlobalVars.VISA_CLI_Option_USB_PID, @"0[x,X]", "")
+                                                       + "::" + GlobalVars.VISA_CLI_Option_USB_SerialNumber
+                                                       + "::RAW";
+                        return true;
+                    }
                 case ((short)Mode.TCPIP):     //TCPIP0::192.168.1.2::inst0::INSTR  TCPIP0::HostName::inst0::INSTR   IP地址或者主机名都可以
                     {
                         GlobalVars.VISAResourceName = String.Empty; // 清空原字符串
@@ -176,6 +187,22 @@ namespace VISA_CLI
                                  );
             }
         }
+        public static void SetUSBRawAttribute(ref MessageBasedSession mbs)
+        {
+            UsbRaw usbRaw = (UsbRaw)mbs;
+            usbRaw.InterruptInPipe = -1; // Disable the interrupt pointer
+            usbRaw.BulkInPipe = 129; // Re-define the bulk-in pipe
+        }
+        public static Byte[] CMDStringToByteArray()
+        {
+            if (GlobalVars.VISA_CLI_Option_isMixMode)  // High Priority of mix mode ,then hex mode
+            {
+                ProcessMixedHex();
+            }
+            // byte[]转String出现乱码（EFBFBD或3F） https://blog.csdn.net/u010898743/article/details/79447074  https://stackoverflow.com/questions/629617/how-to-convert-string-to-iso-8859-1/629629#629629
+            Byte[] ba = GlobalVars.VISA_CLI_Option_isInputModeHex ? (DRDigit.Fast.FromHexString(GlobalVars.VISA_CLI_Option_CommandString)) : (System.Text.Encoding.GetEncoding("iso-8859-1").GetBytes(GlobalVars.VISA_CLI_Option_CommandString));
+            return ba;
+        }
         public static void ListAll_TMC_Devices()
         { 
              //对满足 TMC的设备都支持-ls列出                                                                                            
@@ -205,12 +232,7 @@ namespace VISA_CLI
         public static void  Write()
         {
             SendDeviceClear();
-            if (GlobalVars.VISA_CLI_Option_isMixMode)  // High Priority of mix mode ,then hex mode
-            {
-                ProcessMixedHex();
-            }
-            // byte[]转String出现乱码（EFBFBD或3F） https://blog.csdn.net/u010898743/article/details/79447074  https://stackoverflow.com/questions/629617/how-to-convert-string-to-iso-8859-1/629629#629629
-            Byte[] ba = GlobalVars.VISA_CLI_Option_isInputModeHex ? (DRDigit.Fast.FromHexString(GlobalVars.VISA_CLI_Option_CommandString)): (System.Text.Encoding.GetEncoding("iso-8859-1").GetBytes(GlobalVars.VISA_CLI_Option_CommandString));
+            Byte[] ba = CMDStringToByteArray();
             GlobalVars.mbSession.Write(ba); // use Write(Byte[]) instead of Write(String)
             //GlobalVars.mbSession.Write(GlobalVars.VISA_CLI_Option_CommandString); // use Write(Byte[]) instead of Write(String)
         }
@@ -435,10 +457,12 @@ namespace VISA_CLI
                 // GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
                 GlobalVars.mbSession = (MessageBasedSession)ResourceManager.GetLocalManager().Open(GlobalVars.VISAResourceName);
                 GlobalVars.currentInterfaceType = GlobalVars.mbSession.HardwareInterfaceType.ToString().ToUpper();//GPIB SERIAL
+                GlobalVars.currentResourceClass = GlobalVars.mbSession.ResourceClass.ToString().ToUpper();        //RAW
 
                 if (GlobalVars.VISA_CLI_Option_PrintDebugMessage)
                 {
                     Console.WriteLine("当前使用硬件接口类型:{0}", GlobalVars.currentInterfaceType);
+                    Console.WriteLine("当前使用硬件接口类别:{0}", GlobalVars.currentResourceClass);
                     Console.WriteLine("当前使用硬件接口名:{0}", GlobalVars.mbSession.HardwareInterfaceName);
                     Console.WriteLine("will open {0}", GlobalVars.VISAResourceName);
                 }
@@ -452,6 +476,11 @@ namespace VISA_CLI
                         GlobalVars.VISA_CLI_Option_CommandString += GlobalVars.VISA_CLI_Option_isInputModeHex ? DRDigit.Fast.ToHexString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }) : (System.Text.Encoding.GetEncoding("iso-8859-1").GetString(new[] { GlobalVars.theWriteTerminationCharactersOfRS232 }));//GlobalVars.theWriteTerminationCharactersOfRS232.ToString(); // 更新要发送的命令，末尾加指定的结束符,此处手动添加,系统中终止符只能由  ser.TerminationCharacter 统一设定,为了灵活性,将这一设置让给Read操作，Write操作直接手动在此处在命令末尾加指定的结束符 
                                                                                                                                                                     //https://stackoverflow.com/questions/22135275/how-to-convert-a-single-byte-to-a-string/22135328#22135328
                     }
+                }
+                //USB RAW
+                if (GlobalVars.currentResourceClass == "RAW")//USB RAW
+                {
+                    SetUSBRawAttribute(ref GlobalVars.mbSession);
                 }
 
                 GlobalVars.mbSession.Timeout = Convert.ToInt32(GlobalVars.VISASessionTimeout); //设置超时
@@ -528,6 +557,7 @@ namespace VISA_CLI
         public static bool VISA_CLI_Option_ListInstruments = false;
 
         public static String currentInterfaceType = null;  //接口类型
+        public static String currentResourceClass = null;  //接口类别
         public static short VISA_CLI_Option_CurrentMode= -1;
 
         // read back buffer
@@ -562,7 +592,7 @@ namespace VISA_CLI
         public static String VISA_CLI_Option_USB_VID = String.Empty;
         public static String VISA_CLI_Option_USB_PID = String.Empty;
         public static String VISA_CLI_Option_USB_SerialNumber = String.Empty;
-
+        public static bool VISA_CLI_Option_USB_Raw = false;
 
         //TCPIP
         public static short VISA_CLI_Option_TCPIP_BoardIndex           = 0;
